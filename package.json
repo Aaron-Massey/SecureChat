@@ -1,0 +1,27 @@
+{
+  "name": "securechat-root",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "backend": "npm run dev --prefix backend",
+    "frontend": "npm run dev --prefix frontend",
+    "test": "concurrently \"npm run test --prefix backend\" \"npm run test --prefix frontend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aaron-Massey/SecureChat.git"
+  },
+  "keywords": [],
+  "author": "Aaron Massey",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Aaron-Massey/SecureChat/issues"
+  },
+  "homepage": "https://github.com/Aaron-Massey/SecureChat#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
