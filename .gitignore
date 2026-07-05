@@ -10,3 +10,6 @@ frontend/dist/
 backend/.env
 frontend/.local
 .env
+
+# Root dependencies
+node_modules/
