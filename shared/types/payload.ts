@@ -3,4 +3,5 @@ export interface SecurePayload {
     ciphertext: string;
     version: number;
     cipher: 'AES' | 'DES';
+    hmac?: string;
 }
