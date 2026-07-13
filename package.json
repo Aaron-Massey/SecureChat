@@ -23,5 +23,9 @@
   "homepage": "https://github.com/Aaron-Massey/SecureChat#readme",
   "devDependencies": {
     "concurrently": "^10.0.3"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3",
+    "vue": "^3.5.39"
   }
 }
