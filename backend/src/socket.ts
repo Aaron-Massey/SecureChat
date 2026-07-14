@@ -11,21 +11,48 @@ const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config.
 
 const ROOM_NAME = 'secure-chat-room';
 
+
+const getRandomRekeyInterval = () => {
+    const min = 1 * 60 * 1000;
+    const max = 3 * 60 * 1000;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 export function configureSockets(server: HttpServer) {
     const io = new Server(server, {
-        cors: { origin: config.CORS_ORIGIN, methods: ['GET', 'POST'] }
+        cors: {
+            origin: config.CORS_ORIGIN,
+            methods: ['GET', 'POST']
+        }
     });
 
+    let rekeyTimeout: NodeJS.Timeout;
+
+    const scheduleRekey = () => {
+        if (rekeyTimeout) {
+            clearTimeout(rekeyTimeout);
+        }
+
+        rekeyTimeout = setTimeout(() => {
+            console.log('Broadcasting rekey event to all clients.');
+            io.to(ROOM_NAME).emit('rekey');
+            scheduleRekey();
+        }, getRandomRekeyInterval());
+    };
+
     io.on('connection', (socket: Socket) => {
-        // Join a room
+        console.log(`Client ${socket.id} connected.`);
         socket.join(ROOM_NAME);
 
-        // Get other clients in the room and send to the new client
+        if (io.sockets.adapter.rooms.get(ROOM_NAME)?.size === 1) {
+            console.log('First client connected, starting rekey timer.');
+            scheduleRekey();
+        }
+
         const otherClients = Array.from(io.sockets.adapter.rooms.get(ROOM_NAME) || [])
             .filter(id => id !== socket.id);
         socket.emit('other-clients', otherClients);
 
-        // Notify other clients of the new arrival
         socket.to(ROOM_NAME).emit('new-client', socket.id);
 
         socket.on('webrtc-offer', ({ recipientId, payload }) => {
@@ -41,7 +68,13 @@ export function configureSockets(server: HttpServer) {
         });
 
         socket.on('disconnect', () => {
+            console.log(`Client ${socket.id} disconnected.`);
             socket.to(ROOM_NAME).emit('client-disconnected', socket.id);
+
+            if (!io.sockets.adapter.rooms.get(ROOM_NAME)?.size) {
+                console.log('Last client disconnected, stopping rekey timer.');
+                clearTimeout(rekeyTimeout);
+            }
         });
     });
 }
