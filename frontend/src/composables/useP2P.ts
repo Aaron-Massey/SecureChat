@@ -39,14 +39,18 @@ export function useP2P() {
     channel.onopen = () => console.log(`P2P Connection with ${peerId} established!`);
     channel.onclose = () => console.log(`P2P Connection with ${peerId} closed.`);
     channel.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+      const payload = JSON.parse(event.data) as SecurePayload;
       debugHistory.value.push(payload);
 
-      const result = cryptoStore.decryptMessage(payload);
-      if (result.success) {
-        chatHistory.value.push({ sender: result.senderDisplayName, text: result.plaintext, decrypted: true });
+      if (payload.cipher === 'none' && payload.plaintext) {
+        chatHistory.value.push({ sender: payload.senderDisplayName, text: payload.plaintext, decrypted: true });
       } else {
-        chatHistory.value.push({ sender: payload.senderDisplayName, text: 'Failed to decrypt message', decrypted: false });
+        const result = cryptoStore.decryptMessage(payload);
+        if (result.success) {
+          chatHistory.value.push({ sender: result.senderDisplayName, text: result.plaintext, decrypted: true });
+        } else {
+          chatHistory.value.push({ sender: payload.senderDisplayName, text: 'Failed to decrypt message', decrypted: false });
+        }
       }
     };
   };
@@ -105,23 +109,29 @@ export function useP2P() {
   });
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
-    try {
-      const encryptedPayload = cryptoStore.encryptMessage(plaintext, senderDisplayName);
-      const messageString = JSON.stringify(encryptedPayload);
-
-      dataChannels.forEach((channel, peerId) => {
-        if (channel.readyState === 'open') {
-          channel.send(messageString);
-        } else {
-          console.warn(`Data channel to ${peerId} is not open. Cannot send message.`);
-        }
-      });
-
-      chatHistory.value.push({ sender: 'Me', text: plaintext, decrypted: true });
-      debugHistory.value.push(encryptedPayload);
-    } catch (error) {
-      console.error("Failed to send encrypted message:", error);
+    let payload: SecurePayload;
+    if (cryptoStore.isReady) {
+      payload = cryptoStore.encryptMessage(plaintext, senderDisplayName);
+    } else {
+      payload = {
+        senderDisplayName,
+        plaintext,
+        cipher: 'none',
+      };
     }
+
+    const messageString = JSON.stringify(payload);
+
+    dataChannels.forEach((channel, peerId) => {
+      if (channel.readyState === 'open') {
+        channel.send(messageString);
+      } else {
+        console.warn(`Data channel to ${peerId} is not open. Cannot send message.`);
+      }
+    });
+
+    chatHistory.value.push({ sender: 'Me', text: plaintext, decrypted: true });
+    debugHistory.value.push(payload);
   };
 
   return { sendP2PMessage, chatHistory, debugHistory };
