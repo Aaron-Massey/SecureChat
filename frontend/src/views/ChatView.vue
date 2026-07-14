@@ -1,10 +1,8 @@
 <template>
   <div class="grid-container">
-    <!-- LEFT PANE: Plaintext Chat & Controls -->
     <div class="chat-pane">
       <h2>SecureChat P2P</h2>
 
-      <!-- Crypto Setup Area -->
       <div class="setup-bar">
         <input v-model="displayName" placeholder="Display Name" />
         <input v-model="passwordInput" placeholder="Shared Passphrase" />
@@ -17,7 +15,6 @@
         </button>
       </div>
 
-      <!-- Connection & Chat Feed -->
       <div v-if="crypto.isReady" class="chat-content">
         <div class="controls-bar">
           <label>
@@ -47,7 +44,6 @@
       </div>
     </div>
 
-    <!-- RIGHT PANE: Ciphertext Debug Terminal -->
     <div class="debug-pane">
       <h3>Ciphertext Terminal</h3>
       <div class="terminal-feed" ref="debugFeed">
@@ -93,7 +89,6 @@ const sendMessage = () => {
 }
 
 const handleGlobalKeyPress = (event: KeyboardEvent) => {
-  // Don't interfere if the user is already typing in an input, textarea, or select
   const target = event.target as HTMLElement;
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
     return;
@@ -137,21 +132,21 @@ watch(debugHistory, async () => {
   font-family: monospace;
 }
 .chat-pane {
-  width: 650px; /* Fixed width for the chat pane */
-  flex-shrink: 0; /* Prevent chat pane from shrinking */
+  width: 650px;
+  flex-shrink: 0;
   padding: 20px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #444;
 }
 .debug-pane {
-  flex-grow: 1; /* Allow debug pane to take remaining space */
+  flex-grow: 1;
   padding: 20px;
   display: flex;
   flex-direction: column;
   background-color: #1e1e1e;
   color: #00ff00;
-  min-width: 0; /* Allow debug pane to shrink below its content size if needed */
+  min-width: 0;
 }
 .chat-content {
   display: flex;
