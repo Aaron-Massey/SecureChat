@@ -7,14 +7,16 @@
       <!-- Crypto Setup Area -->
       <div class="setup-bar">
         <input v-model="displayName" placeholder="Display Name" />
-        <input v-model="passwordInput" placeholder="Shared Passphrase" />
+        <input
+          v-model="passwordInput"
+          placeholder="Shared Passphrase"
+          @keydown.enter="finalizeKeySetup"
+          @blur="finalizeKeySetup"
+        />
         <select v-model="crypto.activeBitLength">
           <option :value="128">AES (128-bit)</option>
           <option :value="56">DES (56-bit)</option>
         </select>
-        <button @click="crypto.setupKeys(passwordInput)">
-          {{ crypto.isReady ? 'Update Keys' : 'Set Keys' }}
-        </button>
       </div>
 
       <!-- Connection & Chat Feed -->
@@ -91,6 +93,20 @@ const sendMessage = () => {
   sendP2PMessage(messageInput.value, displayName.value)
   messageInput.value = ''
 }
+
+const finalizeKeySetup = async () => {
+  if (!passwordInput.value) {
+    console.warn('Passphrase is empty. Key setup not initiated.');
+    return;
+  }
+  console.log('Finalizing key setup...');
+  try {
+    await crypto.setupKeys(passwordInput.value);
+    console.log('Key setup successful!');
+  } catch (error) {
+    console.error('Key setup failed:', error);
+  }
+};
 
 const handleGlobalKeyPress = (event: KeyboardEvent) => {
   // Don't interfere if the user is already typing in an input, textarea, or select
