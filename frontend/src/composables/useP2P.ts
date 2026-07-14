@@ -104,6 +104,13 @@ export function useP2P() {
     console.log(`Client ${peerId} disconnected.`);
   });
 
+
+  socket.on('rekey', () => {
+    console.log('Received rekey event from server.');
+    cryptoStore.rekey();
+    chatHistory.value.push({ sender: 'System', text: 'Encryption keys have been rotated.', decrypted: true });
+  });
+
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
     try {
       const encryptedPayload = cryptoStore.encryptMessage(plaintext, senderDisplayName);
