@@ -4,12 +4,13 @@
       <h2>SecureChat P2P</h2>
 
       <div class="setup-bar">
-        <input v-model="displayName" placeholder="Display Name" />
+        <input v-model="displayName" placeholder="Display Name" @input="setupStarted = true" />
         <input
           v-model="passwordInput"
           placeholder="Shared Passphrase"
           @keydown.enter="finalizeKeySetup"
           @blur="finalizeKeySetup"
+          @input="setupStarted = true"
         />
         <select v-model="crypto.activeBitLength">
           <option :value="128">AES (128-bit)</option>
@@ -17,7 +18,16 @@
         </select>
       </div>
 
-      <div v-if="crypto.isReady" class="chat-content">
+      <div v-if="setupStarted || crypto.isReady" class="chat-content">
+        <div v-if="plaintextModeEnabled" class="mode-banner plaintext-mode" role="status" aria-live="polite">
+          <strong>Plaintext mode enabled.</strong>
+          <span>Outgoing messages will be sent without encryption.</span>
+        </div>
+        <div v-else class="mode-banner encrypted-mode" role="status" aria-live="polite">
+          <strong>Encrypted mode enabled.</strong>
+          <span>Outgoing messages will be protected with the selected cipher.</span>
+        </div>
+
         <div class="controls-bar">
           <label>
             <input type="checkbox" v-model="showUndecrypted" />
@@ -42,12 +52,22 @@
         </div>
       </div>
       <div v-else class="crypto-prompt">
-        <p>Please set a display name and a shared passphrase to begin.</p>
+        <p>Please set a display name. Leave the passphrase blank to send unencrypted messages.</p>
       </div>
     </div>
 
     <div class="debug-pane">
       <h3>Ciphertext Terminal</h3>
+      <div class="terminal-alert" :class="plaintextModeEnabled ? 'plaintext-alert' : 'encrypted-alert'" role="alert" aria-live="assertive">
+        <strong>{{ plaintextModeEnabled ? 'PLAINTEXT ALERT' : 'CIPHERTEXT ALERT' }}</strong>
+        <span>
+          {{
+            plaintextModeEnabled
+              ? 'Encryption is disabled right now. Payloads will show cipher: none and the terminal will display readable message content.'
+              : 'Encryption is active. The terminal should display ciphertext, IV, and HMAC details for each message.'
+          }}
+        </span>
+      </div>
       <div class="terminal-feed" ref="debugFeed">
         <pre v-for="(payload, index) in debugHistory" :key="index">
           [Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }} | Version: {{ payload.version }}]
@@ -71,7 +91,9 @@ const { sendP2PMessage, chatHistory, debugHistory } = useP2P()
 const passwordInput = ref('')
 const messageInput = ref('')
 const displayName = ref('Anonymous')
-const showUndecrypted = ref(false)
+const showUndecrypted = ref(true)
+const plaintextModeEnabled = ref(false)
+const setupStarted = ref(false)
 
 const chatFeed = ref<HTMLElement | null>(null)
 const debugFeed = ref<HTMLElement | null>(null)
@@ -85,19 +107,16 @@ const filteredChatHistory = computed(() => {
 });
 
 const sendMessage = () => {
-  if (!messageInput.value || !crypto.isReady) return
+  if (!messageInput.value || (!setupStarted && !crypto.isReady)) return
   sendP2PMessage(messageInput.value, displayName.value)
   messageInput.value = ''
 }
 
 const finalizeKeySetup = async () => {
-  if (!passwordInput.value) {
-    console.warn('Passphrase is empty. Key setup not initiated.');
-    return;
-  }
   console.log('Finalizing key setup...');
   try {
     await crypto.setupKeys(passwordInput.value);
+    plaintextModeEnabled.value = !passwordInput.value.trim()
     console.log('Key setup successful!');
   } catch (error) {
     console.error('Key setup failed:', error);
@@ -201,6 +220,42 @@ input {
 .setup-bar, .controls-bar {
   display: flex;
   margin-bottom: 10px;
+}
+.mode-banner,
+.terminal-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  line-height: 1.4;
+}
+.mode-banner strong,
+.terminal-alert strong {
+  letter-spacing: 0.05em;
+}
+.plaintext-mode {
+  background: #3a1f00;
+  color: #ffd48a;
+  border-color: #ff9f1a;
+}
+.encrypted-mode {
+  background: #10263a;
+  color: #b7e3ff;
+  border-color: #4aa3ff;
+}
+.plaintext-alert {
+  background: #4a120f;
+  color: #ffd1cb;
+  border-color: #ff5a4f;
+  box-shadow: 0 0 0 1px rgba(255, 90, 79, 0.35), 0 0 12px rgba(255, 90, 79, 0.25);
+}
+.encrypted-alert {
+  background: #0f2418;
+  color: #c9f2d6;
+  border-color: #3bd16f;
 }
 .setup-bar input, .setup-bar select, .setup-bar button {
   margin-right: 10px;
