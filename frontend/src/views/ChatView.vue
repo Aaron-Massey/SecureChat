@@ -3,19 +3,16 @@
     <div class="chat-pane">
       <h2>SecureChat P2P</h2>
 
-      <div class="setup-bar">
-        <input v-model="displayName" placeholder="Display Name" @input="setupStarted = true" />
-        <input
-          v-model="passwordInput"
-          placeholder="Shared Passphrase"
-          @keydown.enter="finalizeKeySetup"
-          @blur="finalizeKeySetup"
-          @input="setupStarted = true"
-        />
-        <select v-model="crypto.activeBitLength">
-          <option :value="128">AES (128-bit)</option>
-          <option :value="56">DES (56-bit)</option>
-        </select>
+      <div class="setup-bar p-fluid p-formgrid p-grid">
+        <div class="p-field p-col">
+          <InputText v-model="displayName" placeholder="Display Name" @input="setupStarted = true" />
+        </div>
+        <div class="p-field p-col">
+          <InputText v-model="passwordInput" type="password" placeholder="Shared Passphrase" @keydown.enter="finalizeKeySetup" @blur="finalizeKeySetup" @input="setupStarted = true" />
+        </div>
+        <div class="p-field p-col-2">
+          <Dropdown v-model="crypto.activeBitLength" :options="cipherOptions" optionLabel="label" optionValue="value" />
+        </div>
       </div>
 
       <div v-if="setupStarted || crypto.isReady" class="chat-content">
@@ -28,11 +25,9 @@
           <span>Outgoing messages will be protected with the selected cipher.</span>
         </div>
 
-        <div class="controls-bar">
-          <label>
-            <input type="checkbox" v-model="showUndecrypted" />
-            Show undecryptable messages
-          </label>
+        <div class="controls-bar p-mb-2 p-d-flex p-ai-center">
+          <Checkbox v-model="showUndecrypted" />
+          <label style="margin-left:8px">Show undecryptable messages</label>
         </div>
 
         <div class="message-feed" ref="chatFeed">
@@ -41,14 +36,9 @@
           </div>
         </div>
 
-        <div class="input-area">
-          <input
-            ref="messageInputRef"
-            v-model="messageInput"
-            @keyup.enter="sendMessage"
-            placeholder="Type a message..."
-          />
-          <button @click="sendMessage">Send</button>
+        <div class="input-area p-d-flex p-jc-between p-ai-center">
+          <InputText ref="messageInputRef" v-model="messageInput" @keyup.enter="sendMessage" placeholder="Type a message..." style="flex:1; margin-right:12px" />
+          <Button label="Send" icon="pi pi-send" @click="sendMessage" />
         </div>
       </div>
       <div v-else class="crypto-prompt">
@@ -94,6 +84,10 @@ const displayName = ref('Anonymous')
 const showUndecrypted = ref(true)
 const plaintextModeEnabled = ref(false)
 const setupStarted = ref(false)
+const cipherOptions = [
+  { label: 'AES (128-bit)', value: 128 },
+  { label: 'DES (56-bit)', value: 56 },
+]
 
 const chatFeed = ref<HTMLElement | null>(null)
 const debugFeed = ref<HTMLElement | null>(null)
