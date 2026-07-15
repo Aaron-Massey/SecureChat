@@ -11,7 +11,7 @@ export function useP2P() {
   const peerConnections = reactive<Map<string, RTCPeerConnection>>(new Map());
   const dataChannels = reactive<Map<string, RTCDataChannel>>(new Map());
 
-  const chatHistory = ref<{ sender: string; text: string; decrypted: boolean }[]>([]);
+  const chatHistory = ref<{ sender: string; text: string; decrypted: boolean; timestamp: string }[]>([]);
   const debugHistory = ref<SecurePayload[]>([]);
 
   const createPeerConnection = (peerId: string) => {
@@ -41,15 +41,16 @@ export function useP2P() {
     channel.onmessage = (event) => {
       const payload = JSON.parse(event.data) as SecurePayload;
       debugHistory.value.push(payload);
+      const timestamp = new Date().toLocaleTimeString();
 
       if (payload.cipher === 'none' && payload.plaintext) {
-        chatHistory.value.push({ sender: payload.senderDisplayName, text: payload.plaintext, decrypted: true });
+        chatHistory.value.push({ sender: payload.senderDisplayName, text: payload.plaintext, decrypted: true, timestamp });
       } else {
         const result = cryptoStore.decryptMessage(payload);
         if (result.success) {
-          chatHistory.value.push({ sender: result.senderDisplayName, text: result.plaintext, decrypted: true });
+          chatHistory.value.push({ sender: result.senderDisplayName, text: result.plaintext, decrypted: true, timestamp });
         } else {
-          chatHistory.value.push({ sender: payload.senderDisplayName, text: 'Failed to decrypt message', decrypted: false });
+          chatHistory.value.push({ sender: payload.senderDisplayName, text: 'Failed to decrypt message', decrypted: false, timestamp });
         }
       }
     };
@@ -112,7 +113,7 @@ export function useP2P() {
   socket.on('rekey', () => {
     console.log('Received rekey event from server.');
     cryptoStore.rekey();
-    chatHistory.value.push({ sender: 'System', text: 'Encryption keys have been rotated.', decrypted: true });
+    chatHistory.value.push({ sender: 'System', text: 'Encryption keys have been rotated.', decrypted: true, timestamp: new Date().toLocaleTimeString() });
   });
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
@@ -137,7 +138,7 @@ export function useP2P() {
       }
     });
 
-    chatHistory.value.push({ sender: 'Me', text: plaintext, decrypted: true });
+    chatHistory.value.push({ sender: 'Me', text: plaintext, decrypted: true, timestamp: new Date().toLocaleTimeString() });
     debugHistory.value.push(payload);
   };
 

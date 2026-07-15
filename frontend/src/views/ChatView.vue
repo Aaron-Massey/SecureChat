@@ -31,8 +31,11 @@
         </div>
 
         <div class="message-feed" ref="chatFeed">
-          <div v-for="(msg, index) in filteredChatHistory" :key="index" :class="{ 'undecrypted': !msg.decrypted }">
-            <strong>{{ msg.sender }}:</strong> <span>{{ msg.text }}</span>
+          <div v-for="(msg, index) in filteredChatHistory" :key="index" class="message-item" :class="{ 'undecrypted': !msg.decrypted }">
+            <div>
+              <strong>{{ msg.sender }}:</strong> <span>{{ msg.text }}</span>
+            </div>
+            <div class="timestamp">{{ msg.timestamp }}</div>
           </div>
         </div>
 
@@ -129,7 +132,7 @@ const handleGlobalKeyPress = (event: KeyboardEvent) => {
     return;
   }
 
-  // Focus the message input if a printable character is pressed
+
   if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
     messageInputRef.value?.focus();
   }
@@ -196,6 +199,13 @@ watch(debugHistory, async () => {
   padding: 10px;
   margin-bottom: 10px;
   min-height: 0;
+}
+.message-item {
+  margin-bottom: 10px;
+}
+.timestamp {
+  font-size: 0.8em;
+  color: #888;
 }
 .terminal-feed {
   flex-grow: 1;
