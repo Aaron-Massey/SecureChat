@@ -14,7 +14,8 @@ export default defineConfig({
     port: config.FRONTEND_PORT,
   },
   define: {
-    'import.meta.env.VITE_BACKEND_PORT': JSON.stringify(config.BACKEND_PORT)
+    'import.meta.env.VITE_BACKEND_PORT': JSON.stringify(config.BACKEND_PORT),
+    'import.meta.env.VITE_KEY_DERIVATION_ITERATIONS': JSON.stringify(config.KEY_DERIVATION_ITERATIONS)
   },
   plugins: [
     vue(),

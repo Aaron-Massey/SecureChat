@@ -62,18 +62,15 @@
         </span>
       </div>
       <div class="terminal-feed" ref="debugFeed">
-        <pre v-for="(payload, index) in debugHistory" :key="index">
-          <template v-if="payload.cipher === 'none'">
+        <pre v-for="(payload, index) in debugHistory" :key="index"><template v-if="payload.cipher === 'none'">
 [Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }} | Timestamp: {{ payload.timestamp }}]
 Plaintext: {{ payload.plaintext }}
-          </template>
-          <template v-else>
+</template><template v-else>
 [Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }} | Version: {{ payload.version }} | Timestamp: {{ payload.timestamp }}]
 IV: {{ payload.iv }}
 HMAC: {{ payload.hmac }}
 Ciphertext: {{ payload.ciphertext }}
-          </template>
-        </pre>
+</template></pre>
       </div>
     </div>
   </div>
@@ -110,7 +107,7 @@ const filteredChatHistory = computed(() => {
 });
 
 const sendMessage = () => {
-  if (!messageInput.value || (!setupStarted && !crypto.isReady)) return
+  if (!messageInput.value || (!setupStarted.value && !crypto.isReady)) return
   sendP2PMessage(messageInput.value, displayName.value)
   messageInput.value = ''
 }
@@ -133,7 +130,7 @@ const handleGlobalKeyPress = (event: KeyboardEvent) => {
   }
 
 
-  if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+  if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && messageInputRef.value) {
     messageInputRef.value?.focus();
   }
 };
@@ -202,6 +199,7 @@ watch(debugHistory, async () => {
 }
 .message-item {
   margin-bottom: 10px;
+  word-break: break-word;
 }
 .timestamp {
   font-size: 0.8em;
@@ -218,7 +216,7 @@ watch(debugHistory, async () => {
 .terminal-feed pre {
   white-space: pre-wrap;
   word-break: break-all;
-  margin: 0 0 1em 0;
+  margin: 0;
 }
 .input-area {
   display: flex;
@@ -278,5 +276,9 @@ input {
 .undecrypted {
   color: #999;
   font-style: italic;
+  word-break: break-word;
+}
+.p-dropdown {
+  width: 100%;
 }
 </style>

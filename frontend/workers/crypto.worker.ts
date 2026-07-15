@@ -1,17 +1,17 @@
 import CryptoJS from 'crypto-js';
 
 self.onmessage = (event) => {
-  const { password, salt } = event.data;
+  const { password, salt, iterations } = event.data;
 
   try {
     const key128 = CryptoJS.PBKDF2(password, salt, {
       keySize: 128 / 32,
-      iterations: 1000,
+      iterations: iterations,
     });
 
     const key56 = CryptoJS.PBKDF2(password, salt, {
       keySize: 56 / 32,
-      iterations: 1000,
+      iterations: iterations,
     });
 
     self.postMessage({
