@@ -16,7 +16,7 @@
       </div>
 
       <div v-if="setupStarted || crypto.isReady" class="chat-content">
-        <div v-if="plaintextModeEnabled" class="mode-banner plaintext-mode" role="status" aria-live="polite">
+        <div v-if="!crypto.isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite">
           <strong>Plaintext mode enabled.</strong>
           <span>Outgoing messages will be sent without encryption.</span>
         </div>
@@ -51,11 +51,11 @@
 
     <div class="debug-pane">
       <h3>Ciphertext Terminal</h3>
-      <div class="terminal-alert" :class="plaintextModeEnabled ? 'plaintext-alert' : 'encrypted-alert'" role="alert" aria-live="assertive">
-        <strong>{{ plaintextModeEnabled ? 'PLAINTEXT ALERT' : 'CIPHERTEXT ALERT' }}</strong>
+      <div class="terminal-alert" :class="!crypto.isEncrypted ? 'plaintext-alert' : 'encrypted-alert'" role="alert" aria-live="assertive">
+        <strong>{{ !crypto.isEncrypted ? 'PLAINTEXT ALERT' : 'CIPHERTEXT ALERT' }}</strong>
         <span>
           {{
-            plaintextModeEnabled
+            !crypto.isEncrypted
               ? 'Encryption is disabled right now. Payloads will show cipher: none and the terminal will display readable message content.'
               : 'Encryption is active. The terminal should display ciphertext, IV, and HMAC details for each message.'
           }}
@@ -88,7 +88,6 @@ const passwordInput = ref('')
 const messageInput = ref('')
 const displayName = ref('Anonymous')
 const showUndecrypted = ref(true)
-const plaintextModeEnabled = ref(false)
 const setupStarted = ref(false)
 const cipherOptions = [
   { label: 'AES (128-bit)', value: 128 },
@@ -116,7 +115,6 @@ const finalizeKeySetup = async () => {
   console.log('Finalizing key setup...');
   try {
     await crypto.setupKeys(passwordInput.value);
-    plaintextModeEnabled.value = !passwordInput.value.trim()
     console.log('Key setup successful!');
   } catch (error) {
     console.error('Key setup failed:', error);
@@ -275,9 +273,6 @@ input {
   color: #999;
   font-style: italic;
   word-break: break-word;
-}
-.p-dropdown {
-  width: 100%;
 }
 
 /* Mobile Responsive Layout */
