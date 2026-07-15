@@ -8,7 +8,7 @@
           <InputText v-model="displayName" placeholder="Display Name" @input="setupStarted = true" />
         </div>
         <div class="p-field p-col">
-          <InputText v-model="passwordInput" type="password" placeholder="Shared Passphrase" @keydown.enter="finalizeKeySetup" @blur="finalizeKeySetup" @input="setupStarted = true" />
+          <InputText v-model="passwordInput" placeholder="Shared Passphrase" @keydown.enter="finalizeKeySetup" @blur="finalizeKeySetup" @input="setupStarted = true" />
         </div>
         <div class="p-field p-col-2">
           <Dropdown v-model="crypto.activeBitLength" :options="cipherOptions" optionLabel="label" optionValue="value" />
@@ -26,7 +26,7 @@
         </div>
 
         <div class="controls-bar p-mb-2 p-d-flex p-ai-center">
-          <Checkbox v-model="showUndecrypted" />
+          <Checkbox v-model="showUndecrypted" :binary="true" />
           <label style="margin-left:8px">Show undecryptable messages</label>
         </div>
 
@@ -97,7 +97,7 @@ const cipherOptions = [
 
 const chatFeed = ref<HTMLElement | null>(null)
 const debugFeed = ref<HTMLElement | null>(null)
-const messageInputRef = ref<HTMLInputElement | null>(null)
+const messageInputRef = ref<any>(null)
 
 const filteredChatHistory = computed(() => {
   if (showUndecrypted.value) {
@@ -129,9 +129,8 @@ const handleGlobalKeyPress = (event: KeyboardEvent) => {
     return;
   }
 
-
   if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && messageInputRef.value) {
-    messageInputRef.value?.focus();
+    messageInputRef.value?.$el.focus();
   }
 };
 
@@ -167,15 +166,14 @@ watch(debugHistory, async () => {
   font-family: monospace;
 }
 .chat-pane {
-  width: 650px;
-  flex-shrink: 0;
+  flex: 1;
   padding: 20px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #444;
 }
 .debug-pane {
-  flex-grow: 1;
+  flex: 1;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -280,5 +278,23 @@ input {
 }
 .p-dropdown {
   width: 100%;
+}
+
+/* Mobile Responsive Layout */
+@media (max-width: 768px) {
+  .grid-container {
+    flex-direction: column;
+  }
+  .chat-pane {
+    border-right: none;
+    border-bottom: 1px solid #444;
+    padding-top: 60px;
+  }
+  .debug-pane {
+    min-height: 300px;
+  }
+  .plaintext-alert {
+    display: none;
+  }
 }
 </style>
