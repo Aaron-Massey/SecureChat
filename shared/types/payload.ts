@@ -6,4 +6,5 @@ export interface SecurePayload {
     version?: number;
     cipher: 'AES' | 'DES' | 'none';
     hmac?: string;
+    timestamp: string;
 }

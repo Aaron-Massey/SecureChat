@@ -41,7 +41,7 @@ export function useP2P() {
     channel.onmessage = (event) => {
       const payload = JSON.parse(event.data) as SecurePayload;
       debugHistory.value.push(payload);
-      const timestamp = new Date().toLocaleTimeString();
+      const timestamp = payload.timestamp;
 
       if (payload.cipher === 'none' && payload.plaintext) {
         chatHistory.value.push({ sender: payload.senderDisplayName, text: payload.plaintext, decrypted: true, timestamp });
@@ -118,13 +118,16 @@ export function useP2P() {
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
     let payload: SecurePayload;
+    const timestamp = new Date().toLocaleTimeString();
     if (cryptoStore.isReady) {
       payload = cryptoStore.encryptMessage(plaintext, senderDisplayName);
+      payload.timestamp = timestamp;
     } else {
       payload = {
         senderDisplayName,
         plaintext,
         cipher: 'none',
+        timestamp,
       };
     }
 
@@ -138,7 +141,7 @@ export function useP2P() {
       }
     });
 
-    chatHistory.value.push({ sender: 'Me', text: plaintext, decrypted: true, timestamp: new Date().toLocaleTimeString() });
+    chatHistory.value.push({ sender: 'Me', text: plaintext, decrypted: true, timestamp });
     debugHistory.value.push(payload);
   };
 

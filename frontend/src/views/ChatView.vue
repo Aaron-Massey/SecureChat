@@ -64,11 +64,11 @@
       <div class="terminal-feed" ref="debugFeed">
         <pre v-for="(payload, index) in debugHistory" :key="index">
           <template v-if="payload.cipher === 'none'">
-[Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }}]
+[Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }} | Timestamp: {{ payload.timestamp }}]
 Plaintext: {{ payload.plaintext }}
           </template>
           <template v-else>
-[Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }} | Version: {{ payload.version }}]
+[Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }} | Version: {{ payload.version }} | Timestamp: {{ payload.timestamp }}]
 IV: {{ payload.iv }}
 HMAC: {{ payload.hmac }}
 Ciphertext: {{ payload.ciphertext }}
