@@ -13,8 +13,11 @@ const ROOM_NAME = 'secure-chat-room';
 
 
 const getRandomRekeyInterval = () => {
-    const min = 1 * 60 * 1000;
-    const max = 3 * 60 * 1000;
+    const second = 1000
+    const minute = 60 * second
+
+    const min = 1 * minute;
+    const max = 3 * minute;
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
