@@ -20,5 +20,8 @@
   },
   "dependencies": {
     "socket.io": "^4.8.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
   }
 }
