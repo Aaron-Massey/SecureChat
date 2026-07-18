@@ -51,6 +51,12 @@ Find your current machine's local IP, the process depends on your OS
 `npm run test`  
 `npm run preview`   
 
+# Docker
+
+`docker compose up --build`
+
+Frontend: `http://localhost:8080`  
+Backend: `http://localhost:3000`
+
 # How To Test
 `npm run test`  
-
