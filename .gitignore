@@ -13,3 +13,6 @@ frontend/.local
 
 # Root dependencies
 node_modules/
+
+# Docker export artifacts
+exports/
