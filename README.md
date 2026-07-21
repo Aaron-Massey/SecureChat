@@ -12,7 +12,7 @@ Navigate to 'SecureChat' directory and execute:
 `npm install`
 
 ## Step Four (optional)
-Customize the ports within `config.json` 
+Customize the ports and crypto settings within `config.json`
 
 ## Step Five
 Execute `npm start` 
@@ -53,10 +53,16 @@ Find your current machine's local IP, the process depends on your OS
 
 # Docker
 
-`docker compose up --build`
+Edit `config.json`, then run `npm run docker:up`
+`npm run docker:export`
 
-Frontend: `http://localhost:8080`  
-Backend: `http://localhost:3000`
+Frontend and backend ports come from `config.json`.
+
+# Pi updates
+
+Copy `backend-image.tar`, `frontend-image.tar`, `docker-compose.yml`, `.env`, and `pi/update-containers.sh` to the Pi, then run:
+
+`sh update-containers.sh`
 
 # How To Test
 `npm run test`  
