@@ -15,7 +15,8 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.VITE_BACKEND_PORT': JSON.stringify(config.BACKEND_PORT),
-    'import.meta.env.VITE_KEY_DERIVATION_ITERATIONS': JSON.stringify(config.KEY_DERIVATION_ITERATIONS)
+    'import.meta.env.VITE_KEY_DERIVATION_ITERATIONS': JSON.stringify(config.KEY_DERIVATION_ITERATIONS),
+    'import.meta.env.VITE_KEY_DERIVATION_SALT': JSON.stringify(config.KEY_DERIVATION_SALT)
   },
   plugins: [
     vue(),
