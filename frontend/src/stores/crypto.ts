@@ -1,20 +1,28 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { SecurePayload } from '../../../shared/types/payload';
 import CryptoJS from 'crypto-js';
+import { getCryptoDerivationSettings } from '@/config/crypto';
+import { deriveCryptoKeys, getIvLength } from '@/utils/crypto-keys';
 
 export const useCryptoStore = defineStore('crypto', () => {
   const activeBitLength = ref<128 | 56>(128);
   const isReady = ref(false);
-  let sharedKey: CryptoJS.lib.WordArray | null = null;
+  const isEncrypted = computed(() => isReady.value);
+  let lastPassword: string | null = null;
+  let sharedKeys: ReturnType<typeof deriveCryptoKeys> | null = null;
 
   const setupKeys = (password: string) => {
     if (!password || password.trim().length === 0) {
       isReady.value = false;
-      sharedKey = null;
+      lastPassword = null;
+      sharedKeys = null;
       return;
     }
-    sharedKey = CryptoJS.enc.Utf8.parse(password);
+
+    const { salt, iterations } = getCryptoDerivationSettings();
+    sharedKeys = deriveCryptoKeys(password, salt, iterations);
+    lastPassword = password;
     isReady.value = true;
   };
 
@@ -22,24 +30,24 @@ export const useCryptoStore = defineStore('crypto', () => {
     plaintext: string,
     senderDisplayName: string
   ): SecurePayload => {
-    if (!isReady.value || !sharedKey) {
+    if (!isReady.value || !sharedKeys) {
       throw new Error('Crypto store not ready. Call setupKeys first.');
     }
 
     const cipher = activeBitLength.value === 128 ? 'AES' : 'DES';
-    const iv = CryptoJS.lib.WordArray.random(16);
+    const iv = CryptoJS.lib.WordArray.random(getIvLength(cipher));
     const ivHex = iv.toString();
 
     let ciphertext: CryptoJS.lib.CipherParams;
 
     if (cipher === 'AES') {
-      ciphertext = CryptoJS.AES.encrypt(plaintext, sharedKey, {
+      ciphertext = CryptoJS.AES.encrypt(plaintext, sharedKeys.aesKey, {
         iv: iv,
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
       });
     } else {
-      ciphertext = CryptoJS.DES.encrypt(plaintext, sharedKey, {
+      ciphertext = CryptoJS.DES.encrypt(plaintext, sharedKeys.desKey, {
         iv: iv,
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
@@ -47,7 +55,7 @@ export const useCryptoStore = defineStore('crypto', () => {
     }
 
     const ciphertextHex = ciphertext.toString();
-    const hmac = CryptoJS.HmacSHA256(ciphertextHex, CryptoJS.enc.Utf8.parse(sharedKey.toString())).toString();
+    const hmac = CryptoJS.HmacSHA256(ciphertextHex, sharedKeys.hmacKey).toString();
 
     return {
       senderDisplayName,
@@ -63,7 +71,7 @@ export const useCryptoStore = defineStore('crypto', () => {
   const decryptMessage = (
     payload: SecurePayload
   ): { success: boolean; plaintext: string; senderDisplayName: string } => {
-    if (!isReady.value || !sharedKey) {
+    if (!isReady.value || !sharedKeys) {
       return {
         success: false,
         plaintext: 'Crypto store not ready',
@@ -81,7 +89,7 @@ export const useCryptoStore = defineStore('crypto', () => {
       }
 
       if (payload.hmac) {
-        const calculatedHmac = CryptoJS.HmacSHA256(payload.ciphertext, CryptoJS.enc.Utf8.parse(sharedKey.toString())).toString();
+        const calculatedHmac = CryptoJS.HmacSHA256(payload.ciphertext, sharedKeys.hmacKey).toString();
         if (calculatedHmac !== payload.hmac) {
           return {
             success: false,
@@ -95,14 +103,14 @@ export const useCryptoStore = defineStore('crypto', () => {
       let plaintext: string;
 
       if (payload.cipher === 'AES') {
-        const decrypted = CryptoJS.AES.decrypt(payload.ciphertext, sharedKey, {
+        const decrypted = CryptoJS.AES.decrypt(payload.ciphertext, sharedKeys.aesKey, {
           iv: iv,
           mode: CryptoJS.mode.CBC,
           padding: CryptoJS.pad.Pkcs7
         });
         plaintext = decrypted.toString(CryptoJS.enc.Utf8);
       } else if (payload.cipher === 'DES') {
-        const decrypted = CryptoJS.DES.decrypt(payload.ciphertext, sharedKey, {
+        const decrypted = CryptoJS.DES.decrypt(payload.ciphertext, sharedKeys.desKey, {
           iv: iv,
           mode: CryptoJS.mode.CBC,
           padding: CryptoJS.pad.Pkcs7
@@ -139,11 +147,23 @@ export const useCryptoStore = defineStore('crypto', () => {
     }
   };
 
+  const rekey = () => {
+    if (!lastPassword) {
+      isReady.value = false;
+      sharedKeys = null;
+      return;
+    }
+
+    setupKeys(lastPassword);
+  };
+
   return {
     activeBitLength,
     isReady,
+    isEncrypted,
     setupKeys,
     encryptMessage,
-    decryptMessage
+    decryptMessage,
+    rekey
   };
 });
