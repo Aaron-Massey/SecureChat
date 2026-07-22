@@ -12,6 +12,14 @@ export default defineConfig({
   server: {
     host: true,
     port: config.FRONTEND_PORT,
+    proxy: {
+      '/socket.io': {
+        target: config.USE_HTTPS ? `https://localhost:${config.BACKEND_PORT}` : `http://localhost:${config.BACKEND_PORT}`,
+        ws: true,
+        secure: false,
+        changeOrigin: true
+      }
+    }
   },
   define: {
     'import.meta.env.VITE_BACKEND_PORT': JSON.stringify(config.BACKEND_PORT),
