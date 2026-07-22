@@ -12,7 +12,7 @@
       />
 
       <div v-if="setupStarted || crypto.isReady" class="chat-content">
-        <ModeBanner :isEncrypted="crypto.isEncrypted" />
+        <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" />
 
         <MessageFeed
           :chatHistory="chatHistory"
@@ -41,7 +41,7 @@ import MessageInput from '@/components/chat/MessageInput.vue';
 import CipherTerminal from '@/components/chat/CipherTerminal.vue';
 
 const crypto = useCryptoStore();
-const { sendP2PMessage, chatHistory, debugHistory } = useP2P();
+const { sendP2PMessage, chatHistory, debugHistory, connectionStatus } = useP2P();
 
 const passwordInput = ref('');
 const displayName = ref('Anonymous');

@@ -1,7 +1,7 @@
 import { ref, onUnmounted } from 'vue';
 import type { SecurePayload } from '@shared/types/payload';
 import { useCryptoStore } from '@/stores/crypto';
-import { P2PManager } from '@/services/p2pManager';
+import { P2PManager, type ConnectionStatus } from '@/services/p2pManager';
 
 export interface ChatMessage {
   sender: string;
@@ -14,6 +14,8 @@ export function useP2P() {
   const cryptoStore = useCryptoStore();
   const chatHistory = ref<ChatMessage[]>([]);
   const debugHistory = ref<SecurePayload[]>([]);
+  const connectionStatus = ref<ConnectionStatus>('disconnected');
+  const connectionDetail = ref<string>('Initializing...');
 
   const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
   const backendUrl = `${protocol}//${window.location.hostname}:${import.meta.env.VITE_BACKEND_PORT}`;
@@ -59,9 +61,25 @@ export function useP2P() {
     });
   };
 
+  const handleConnectionStatusChange = (status: ConnectionStatus, detail?: string) => {
+    const prevStatus = connectionStatus.value;
+    connectionStatus.value = status;
+    connectionDetail.value = detail || '';
+
+    if (prevStatus !== status && detail) {
+      chatHistory.value.push({
+        sender: 'System',
+        text: detail,
+        decrypted: true,
+        timestamp: new Date().toLocaleTimeString()
+      });
+    }
+  };
+
   const p2pManager = new P2PManager(backendUrl, {
     onMessageReceived: handleIncomingMessage,
-    onRekeyRequested: handleRekeyRequested
+    onRekeyRequested: handleRekeyRequested,
+    onConnectionStatusChange: handleConnectionStatusChange
   });
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
@@ -96,5 +114,5 @@ export function useP2P() {
     p2pManager.destroy();
   });
 
-  return { sendP2PMessage, chatHistory, debugHistory };
+  return { sendP2PMessage, chatHistory, debugHistory, connectionStatus, connectionDetail };
 }

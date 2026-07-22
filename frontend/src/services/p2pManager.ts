@@ -1,9 +1,12 @@
 import { io, Socket } from 'socket.io-client';
 import type { SecurePayload } from '@shared/types/payload';
 
+export type ConnectionStatus = 'connected' | 'reconnecting' | 'disconnected';
+
 export interface P2PManagerCallbacks {
   onMessageReceived: (payload: SecurePayload) => void;
   onRekeyRequested: () => void;
+  onConnectionStatusChange?: (status: ConnectionStatus, detail?: string) => void;
 }
 
 export class P2PManager {
@@ -14,11 +17,43 @@ export class P2PManager {
 
   constructor(backendUrl: string, callbacks: P2PManagerCallbacks) {
     this.callbacks = callbacks;
-    this.socket = io(backendUrl);
+    this.socket = io(backendUrl, {
+      reconnection: true,
+      reconnectionAttempts: 20,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
+      transports: ['websocket', 'polling']
+    });
     this.registerSocketEvents();
   }
 
   private registerSocketEvents(): void {
+    this.socket.on('connect', () => {
+      console.log('Connected to signaling server.');
+      this.callbacks.onConnectionStatusChange?.('connected', 'Connected to signaling server.');
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.warn(`Signaling server disconnected: ${reason}`);
+      this.callbacks.onConnectionStatusChange?.('reconnecting', `Signaling server connection lost (${reason}). Retrying...`);
+    });
+
+    this.socket.io.on('reconnect_attempt', (attempt) => {
+      console.log(`Reconnection attempt ${attempt}...`);
+      this.callbacks.onConnectionStatusChange?.('reconnecting', `Reconnecting to signaling server (attempt ${attempt})...`);
+    });
+
+    this.socket.io.on('reconnect', () => {
+      console.log('Successfully reconnected to signaling server.');
+      this.callbacks.onConnectionStatusChange?.('connected', 'Reconnected to signaling server.');
+    });
+
+    this.socket.io.on('reconnect_failed', () => {
+      console.error('Failed to reconnect to signaling server.');
+      this.callbacks.onConnectionStatusChange?.('disconnected', 'Connection to signaling server failed.');
+    });
+
     this.socket.on('other-clients', (otherClientIds: string[]) => {
       otherClientIds.forEach(async (peerId) => {
         const peerConnection = this.createPeerConnection(peerId);
@@ -56,7 +91,11 @@ export class P2PManager {
     this.socket.on('new-ice-candidate', async ({ senderId, payload }) => {
       const peerConnection = this.peerConnections.get(senderId);
       if (peerConnection) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(payload));
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(payload));
+        } catch (err) {
+          console.warn(`Error adding ICE candidate for ${senderId}:`, err);
+        }
       }
     });
 
@@ -81,6 +120,15 @@ export class P2PManager {
       }
     };
 
+    peerConnection.oniceconnectionstatechange = () => {
+      const state = peerConnection.iceConnectionState;
+      console.log(`Peer ${peerId} ICE connection state: ${state}`);
+      if (state === 'disconnected' || state === 'failed') {
+        console.warn(`ICE connection state '${state}' for peer ${peerId}. Initiating auto-reconnect / ICE restart...`);
+        this.attemptPeerIceRestart(peerId, peerConnection);
+      }
+    };
+
     peerConnection.ondatachannel = (event) => {
       const dataChannel = event.channel;
       this.dataChannels.set(peerId, dataChannel);
@@ -91,9 +139,27 @@ export class P2PManager {
     return peerConnection;
   }
 
+  private async attemptPeerIceRestart(peerId: string, peerConnection: RTCPeerConnection): Promise<void> {
+    try {
+      if (peerConnection.signalingState === 'stable') {
+        const offer = await peerConnection.createOffer({ iceRestart: true });
+        await peerConnection.setLocalDescription(offer);
+        this.socket.emit('webrtc-offer', { recipientId: peerId, payload: offer });
+        console.log(`Sent ICE restart offer to ${peerId}`);
+      }
+    } catch (err) {
+      console.error(`Failed to perform ICE restart for ${peerId}:`, err);
+    }
+  }
+
   private setupDataChannel(channel: RTCDataChannel, peerId: string): void {
-    channel.onopen = () => console.log(`P2P Connection with ${peerId} established!`);
-    channel.onclose = () => console.log(`P2P Connection with ${peerId} closed.`);
+    channel.onopen = () => {
+      console.log(`P2P DataChannel with ${peerId} established!`);
+      this.callbacks.onConnectionStatusChange?.('connected', `Established P2P connection with peer ${peerId}.`);
+    };
+    channel.onclose = () => {
+      console.log(`P2P DataChannel with ${peerId} closed.`);
+    };
     channel.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as SecurePayload;
@@ -110,7 +176,7 @@ export class P2PManager {
       if (channel.readyState === 'open') {
         channel.send(messageString);
       } else {
-        console.warn(`Data channel to ${peerId} is not open. Cannot send message.`);
+        console.warn(`Data channel to ${peerId} is not open (state: ${channel.readyState}). Cannot send message.`);
       }
     });
   }
