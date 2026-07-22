@@ -2,6 +2,9 @@ import { ref, onUnmounted } from 'vue';
 import type { SecurePayload, FileMetadata } from '@shared/types/payload';
 import { useCryptoStore } from '@/stores/crypto';
 import { P2PManager, type ConnectionStatus } from '@/services/p2pManager';
+import { PayloadFactory } from '@/factories/payload.factory';
+import { ConnectionStateContext } from '@/patterns/connectionState';
+import { CommandQueueManager, SendTextMessageCommand, SendFileMessageCommand } from '@/commands/chatCommands';
 import {
   sliceFileIntoChunks,
   arrayBufferToBase64,
@@ -35,10 +38,10 @@ export function useP2P() {
   const connectionStatus = ref<ConnectionStatus>('disconnected');
   const connectionDetail = ref<string>('Initializing...');
 
-  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-  const backendUrl = import.meta.env.DEV
-    ? `${protocol}//${window.location.hostname}:${import.meta.env.VITE_BACKEND_PORT}`
-    : window.location.origin;
+  const stateContext = new ConnectionStateContext();
+  const commandQueue = new CommandQueueManager();
+
+  const backendUrl = window.location.origin;
 
   const handleIncomingMessage = (payload: SecurePayload) => {
     debugHistory.value.push(payload);
@@ -188,16 +191,22 @@ export function useP2P() {
 
   const handleConnectionStatusChange = (status: ConnectionStatus, detail?: string) => {
     const prevStatus = connectionStatus.value;
+    const currentStateObj = stateContext.setState(status);
+
     connectionStatus.value = status;
-    connectionDetail.value = detail || '';
+    connectionDetail.value = currentStateObj.getStatusDetail(detail);
 
     if (prevStatus !== status && detail) {
       chatHistory.value.push({
         sender: 'System',
-        text: detail,
+        text: connectionDetail.value,
         decrypted: true,
         timestamp: new Date().toLocaleTimeString()
       });
+    }
+
+    if (status === 'connected' && commandQueue.pendingCount > 0) {
+      commandQueue.flush();
     }
   };
 
@@ -211,6 +220,16 @@ export function useP2P() {
   });
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
+    const currentState = stateContext.state;
+    if (!currentState.canSend && connectionStatus.value !== 'connected') {
+      const cmd = new SendTextMessageCommand((t, s) => p2pManager.broadcastMessage(s === senderDisplayName ? PayloadFactory.createTextPayload(s, t) : cryptoStore.encryptMessage(t, s)), plaintext, senderDisplayName);
+      commandQueue.enqueue(cmd);
+    }
+
+    sendP2PMessageDirect(plaintext, senderDisplayName);
+  };
+
+  const sendP2PMessageDirect = (plaintext: string, senderDisplayName: string) => {
     let payload: SecurePayload;
     const timestamp = new Date().toLocaleTimeString();
 
@@ -219,13 +238,7 @@ export function useP2P() {
       payload.timestamp = timestamp;
       payload.type = 'text';
     } else {
-      payload = {
-        senderDisplayName,
-        plaintext,
-        cipher: 'none',
-        type: 'text',
-        timestamp
-      };
+      payload = PayloadFactory.createTextPayload(senderDisplayName, plaintext, timestamp);
     }
 
     p2pManager.broadcastMessage(payload);
@@ -241,6 +254,17 @@ export function useP2P() {
   };
 
   const sendP2PFile = async (file: File, senderDisplayName: string): Promise<void> => {
+    const currentState = stateContext.state;
+    if (!currentState.canSend && connectionStatus.value !== 'connected') {
+      const cmd = new SendFileMessageCommand((f, s) => sendP2PFileDirect(f, s), file, senderDisplayName);
+      commandQueue.enqueue(cmd);
+      return;
+    }
+
+    await sendP2PFileDirect(file, senderDisplayName);
+  };
+
+  const sendP2PFileDirect = async (file: File, senderDisplayName: string): Promise<void> => {
     const timestamp = new Date().toLocaleTimeString();
     const rawChunks = await sliceFileIntoChunks(file);
     const fileId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -256,24 +280,14 @@ export function useP2P() {
       fileHash
     };
 
-    let cipherType: 'AES' | 'DES' | 'none' = 'none';
     let headerPayload: SecurePayload;
 
     if (cryptoStore.isReady) {
-      headerPayload = cryptoStore.encryptMessage(`FILE:${file.name}`, senderDisplayName);
-      cipherType = headerPayload.cipher;
+      const encrypted = cryptoStore.encryptMessage(`FILE:${file.name}`, senderDisplayName);
+      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, encrypted, timestamp);
     } else {
-      headerPayload = {
-        senderDisplayName,
-        plaintext: `FILE:${file.name}`,
-        cipher: 'none',
-        timestamp
-      };
+      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, undefined, timestamp);
     }
-
-    headerPayload.type = 'file-header';
-    headerPayload.fileMetadata = fileMetadata;
-    headerPayload.timestamp = timestamp;
 
     const chunkPayloads: SecurePayload[] = [];
     const localBuffers: ArrayBuffer[] = [];
@@ -285,30 +299,22 @@ export function useP2P() {
       localBuffers.push(chunk);
 
       let chunkPayload: SecurePayload;
-
-      if (cryptoStore.isReady) {
-        chunkPayload = cryptoStore.encryptMessage(base64Chunk, senderDisplayName);
-      } else {
-        chunkPayload = {
-          senderDisplayName,
-          plaintext: base64Chunk,
-          cipher: 'none',
-          timestamp
-        };
-      }
-
-      chunkPayload.type = 'file-chunk';
-      chunkPayload.timestamp = timestamp;
-      chunkPayload.chunkMetadata = {
+      const chunkMetadata = {
         fileId,
         chunkIndex: i,
         totalChunks: rawChunks.length
       };
 
+      if (cryptoStore.isReady) {
+        const encryptedChunk = cryptoStore.encryptMessage(base64Chunk, senderDisplayName);
+        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, encryptedChunk, undefined, timestamp);
+      } else {
+        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, undefined, base64Chunk, timestamp);
+      }
+
       chunkPayloads.push(chunkPayload);
     }
 
-    // Broadcast file header and chunks over WebRTC
     await p2pManager.sendFilePayloads(headerPayload, chunkPayloads);
 
     const mediaUrl = createObjectUrlFromBuffers(localBuffers, fileMetadata.mimeType);
