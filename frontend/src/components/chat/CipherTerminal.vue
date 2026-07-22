@@ -1,21 +1,6 @@
 <template>
   <div class="debug-pane">
     <h3>Ciphertext Terminal</h3>
-    <div
-      class="terminal-alert"
-      :class="!isEncrypted ? 'plaintext-alert' : 'encrypted-alert'"
-      role="alert"
-      aria-live="assertive"
-    >
-      <strong>{{ !isEncrypted ? 'PLAINTEXT ALERT' : 'CIPHERTEXT ALERT' }}</strong>
-      <span>
-        {{
-          !isEncrypted
-            ? 'Encryption is disabled right now. Payloads will show cipher: none and the terminal will display readable message content.'
-            : 'Encryption is active. The terminal should display ciphertext, IV, and HMAC details for each message.'
-        }}
-      </span>
-    </div>
     <div class="terminal-feed" ref="debugFeedRef">
       <pre v-for="(payload, index) in debugHistory" :key="index"><template v-if="payload.cipher === 'none'">
 [Sender: {{ payload.senderDisplayName }} | Cipher: {{ payload.cipher }} | Timestamp: {{ payload.timestamp }}]
@@ -35,7 +20,6 @@ import { ref, watch, nextTick } from 'vue';
 import type { SecurePayload } from '@shared/types/payload';
 
 const props = defineProps<{
-  isEncrypted: boolean;
   debugHistory: SecurePayload[];
 }>();
 
@@ -76,37 +60,10 @@ watch(
   word-break: break-all;
   margin: 0;
 }
-.terminal-alert {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  line-height: 1.4;
-}
-.terminal-alert strong {
-  letter-spacing: 0.05em;
-}
-.plaintext-alert {
-  background: #4a120f;
-  color: #ffd1cb;
-  border-color: #ff5a4f;
-  box-shadow: 0 0 0 1px rgba(255, 90, 79, 0.35), 0 0 12px rgba(255, 90, 79, 0.25);
-}
-.encrypted-alert {
-  background: #0f2418;
-  color: #c9f2d6;
-  border-color: #3bd16f;
-}
 
 @media (max-width: 768px) {
   .debug-pane {
     min-height: 300px;
-  }
-  .plaintext-alert {
-    display: none;
   }
 }
 </style>

@@ -15,7 +15,8 @@ export function useP2P() {
   const chatHistory = ref<ChatMessage[]>([]);
   const debugHistory = ref<SecurePayload[]>([]);
 
-  const backendUrl = `http://${window.location.hostname}:${import.meta.env.VITE_BACKEND_PORT}`;
+  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+  const backendUrl = `${protocol}//${window.location.hostname}:${import.meta.env.VITE_BACKEND_PORT}`;
 
   const handleIncomingMessage = (payload: SecurePayload) => {
     debugHistory.value.push(payload);

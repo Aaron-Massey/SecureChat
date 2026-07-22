@@ -26,10 +26,7 @@
       </div>
     </div>
 
-    <CipherTerminal
-      :isEncrypted="crypto.isEncrypted"
-      :debugHistory="debugHistory"
-    />
+    <CipherTerminal :debugHistory="debugHistory" />
   </div>
 </template>
 
