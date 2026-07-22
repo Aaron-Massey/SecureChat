@@ -48,7 +48,7 @@ describe('MessageFeed', () => {
 
     const items = wrapper.findAll('.message-item');
     expect(items.length).toBe(2);
-    expect(items[0].classes()).not.toContain('undecrypted');
-    expect(items[1].classes()).toContain('undecrypted');
+    expect(items[0]!.classes()).not.toContain('undecrypted');
+    expect(items[1]!.classes()).toContain('undecrypted');
   });
 });

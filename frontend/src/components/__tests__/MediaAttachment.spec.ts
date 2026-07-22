@@ -1,0 +1,78 @@
+import { describe, it, expect, vi } from 'vitest';
+import { mount } from '@vue/test-utils';
+import MediaAttachment from '../chat/MediaAttachment.vue';
+import * as fileChunker from '@/utils/fileChunker';
+
+describe('MediaAttachment', () => {
+  it('renders generic file download card for non-media file', () => {
+    const wrapper = mount(MediaAttachment, {
+      props: {
+        fileName: 'report.pdf',
+        fileSize: 1024 * 1024,
+        mimeType: 'application/pdf',
+        mediaUrl: 'blob:http://localhost/dummy-pdf'
+      }
+    });
+
+    expect(wrapper.text()).toContain('report.pdf');
+    expect(wrapper.text()).toContain('1.0 MB');
+    expect(wrapper.text()).toContain('Download');
+  });
+
+  it('renders unrevealed overlay for images until button click', async () => {
+    const wrapper = mount(MediaAttachment, {
+      props: {
+        fileName: 'photo.png',
+        fileSize: 500 * 1024,
+        mimeType: 'image/png',
+        mediaUrl: 'blob:http://localhost/dummy-img'
+      }
+    });
+
+    expect(wrapper.text()).toContain('Click to View Image');
+    expect(wrapper.find('img').exists()).toBe(false);
+
+    // Click reveal button
+    await wrapper.find('.reveal-button').trigger('click');
+
+    expect(wrapper.find('img').exists()).toBe(true);
+    expect(wrapper.find('img').attributes('src')).toBe('blob:http://localhost/dummy-img');
+
+    // Click hide button
+    await wrapper.find('.hide-button').trigger('click');
+    expect(wrapper.find('img').exists()).toBe(false);
+  });
+
+  it('renders progress bar when file is transferring', () => {
+    const wrapper = mount(MediaAttachment, {
+      props: {
+        fileName: 'video.mp4',
+        fileSize: 5 * 1024 * 1024,
+        mimeType: 'video/mp4',
+        mediaUrl: '',
+        isTransferring: true,
+        progress: 45
+      }
+    });
+
+    expect(wrapper.text()).toContain('Receiving 45%');
+    expect(wrapper.find('.progress-bar-fill').attributes('style')).toContain('width: 45%');
+  });
+
+  it('revokes object URL on unmount', () => {
+    const revokeSpy = vi.spyOn(fileChunker, 'revokeObjectUrl').mockImplementation(() => {});
+
+    const wrapper = mount(MediaAttachment, {
+      props: {
+        fileName: 'test.png',
+        fileSize: 100,
+        mimeType: 'image/png',
+        mediaUrl: 'blob:http://localhost/dummy-url'
+      }
+    });
+
+    wrapper.unmount();
+    expect(revokeSpy).toHaveBeenCalledWith('blob:http://localhost/dummy-url');
+    revokeSpy.mockRestore();
+  });
+});

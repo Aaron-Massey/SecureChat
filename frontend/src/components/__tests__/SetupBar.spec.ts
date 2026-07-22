@@ -21,8 +21,8 @@ describe('SetupBar', () => {
 
     const inputs = wrapper.findAll('input');
     expect(inputs.length).toBeGreaterThanOrEqual(2);
-    expect((inputs[0].element as HTMLInputElement).value).toBe('Alice');
-    expect((inputs[1].element as HTMLInputElement).value).toBe('secret123');
+    expect((inputs[0]!.element as HTMLInputElement).value).toBe('Alice');
+    expect((inputs[1]!.element as HTMLInputElement).value).toBe('secret123');
   });
 
   it('emits inputStarted on typing display name', async () => {
@@ -39,7 +39,7 @@ describe('SetupBar', () => {
     });
 
     const input = wrapper.findAll('input')[0];
-    await input.trigger('input');
+    await input!.trigger('input');
 
     expect(wrapper.emitted('inputStarted')).toBeTruthy();
   });
