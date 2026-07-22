@@ -14,7 +14,9 @@
     "test": "concurrently \"npm run test --prefix backend\" \"npm run test --prefix frontend\"",
     "docker:sync": "node docker-sync-env.mjs",
     "docker:up": "npm run docker:sync && docker compose up --build",
-    "docker:export": "npm run docker:sync && node docker-export.mjs"
+    "docker:export": "npm run docker:sync && node docker-export.mjs",
+    "deploy:pi": "node deploy-pi.mjs",
+    "pi:update": "sh pi/update-containers.sh"
   },
   "repository": {
     "type": "git",

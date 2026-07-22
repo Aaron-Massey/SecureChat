@@ -9,15 +9,34 @@ const rootDir = __dirname;
 const exportDir = path.join(rootDir, 'exports');
 const platform = 'linux/arm64';
 
+// Check if Docker daemon is running
+try {
+  execFileSync('docker', ['info'], { stdio: 'ignore' });
+} catch (err) {
+  console.error('\n====================================================');
+  console.error('❌ Error: Docker Desktop is not running!');
+  console.error('====================================================');
+  console.error('Please launch Docker Desktop on your computer, wait for it');
+  console.error('to start, and run "npm run deploy:pi" again.\n');
+  process.exit(1);
+}
+
 mkdirSync(exportDir, { recursive: true });
 
 const run = (args) => {
-  execFileSync('docker', args, {
-    cwd: rootDir,
-    stdio: 'inherit',
-  });
+  try {
+    execFileSync('docker', args, {
+      cwd: rootDir,
+      stdio: ['ignore', 'inherit', 'inherit'],
+    });
+  } catch (err) {
+    console.error(`\n❌ Error executing "docker ${args.join(' ')}":`);
+    console.error(err.message);
+    process.exit(1);
+  }
 };
 
+console.log('Building backend ARM64 Docker image...');
 run([
   'buildx',
   'build',
@@ -32,6 +51,7 @@ run([
   '.',
 ]);
 
+console.log('Building frontend ARM64 Docker image...');
 run([
   'buildx',
   'build',
@@ -46,4 +66,4 @@ run([
   '.',
 ]);
 
-console.log(`Exported images to ${exportDir}`);
+console.log(`\nSuccessfully exported ARM64 images to ${exportDir}`);

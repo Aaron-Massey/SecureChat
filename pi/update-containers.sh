@@ -33,4 +33,10 @@ docker load -i frontend-image.tar
 echo "Recreating containers with Docker Compose..."
 docker compose up -d --no-build --force-recreate
 
-echo "SecureChat containers updated successfully over HTTPS!"
+echo "Cleaning up dangling images..."
+docker image prune -f
+
+echo "Current container status:"
+docker compose ps
+
+echo "SecureChat containers updated successfully!"

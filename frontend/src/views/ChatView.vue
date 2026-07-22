@@ -19,7 +19,7 @@
           v-model:showUndecrypted="showUndecrypted"
         />
 
-        <MessageInput @send="sendMessage" />
+        <MessageInput @send="sendMessage" @sendFile="handleSendFile" />
       </div>
       <div v-else class="crypto-prompt">
         <p>Please set a display name. Leave the passphrase blank to send unencrypted messages.</p>
@@ -41,7 +41,7 @@ import MessageInput from '@/components/chat/MessageInput.vue';
 import CipherTerminal from '@/components/chat/CipherTerminal.vue';
 
 const crypto = useCryptoStore();
-const { sendP2PMessage, chatHistory, debugHistory, connectionStatus } = useP2P();
+const { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus } = useP2P();
 
 const passwordInput = ref('');
 const displayName = ref('Anonymous');
@@ -52,6 +52,12 @@ const sendMessage = (text: string) => {
   if (!text || (!setupStarted.value && !crypto.isReady)) return;
   sendP2PMessage(text, displayName.value);
 };
+
+const handleSendFile = (file: File) => {
+  if (!file || (!setupStarted.value && !crypto.isReady)) return;
+  sendP2PFile(file, displayName.value);
+};
+
 
 const finalizeKeySetup = () => {
   try {

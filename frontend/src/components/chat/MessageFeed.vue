@@ -12,13 +12,25 @@
     <div class="message-feed" ref="feedRef">
       <div
         v-for="(msg, index) in filteredChatHistory"
-        :key="index"
+        :key="msg.id || index"
         class="message-item"
         :class="{ 'undecrypted': !msg.decrypted }"
       >
         <div>
-          <strong>{{ msg.sender }}:</strong> <span>{{ msg.text }}</span>
+          <strong>{{ msg.sender }}:</strong> <span v-if="msg.text">{{ msg.text }}</span>
         </div>
+
+        <!-- Render File / Media Attachment -->
+        <MediaAttachment
+          v-if="msg.fileAttachment && (msg.decrypted || msg.fileAttachment.isTransferring)"
+          :file-name="msg.fileAttachment.fileName"
+          :file-size="msg.fileAttachment.fileSize"
+          :mime-type="msg.fileAttachment.mimeType"
+          :media-url="msg.fileAttachment.mediaUrl || ''"
+          :progress="msg.fileAttachment.progress || 0"
+          :is-transferring="msg.fileAttachment.isTransferring || false"
+        />
+
         <div class="timestamp">{{ msg.timestamp }}</div>
       </div>
     </div>
@@ -28,6 +40,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
 import type { ChatMessage } from '@/composables/useP2P';
+import MediaAttachment from './MediaAttachment.vue';
+
 
 const props = defineProps<{
   chatHistory: ChatMessage[];

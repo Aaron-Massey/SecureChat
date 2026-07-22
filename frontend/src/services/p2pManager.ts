@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import type { SecurePayload } from '@shared/types/payload';
+import { base64ToArrayBuffer } from '@/utils/fileChunker';
 
 export type ConnectionStatus = 'connected' | 'reconnecting' | 'disconnected';
 
@@ -7,6 +8,9 @@ export interface P2PManagerCallbacks {
   onMessageReceived: (payload: SecurePayload) => void;
   onRekeyRequested: () => void;
   onConnectionStatusChange?: (status: ConnectionStatus, detail?: string) => void;
+  onFileHeaderReceived?: (payload: SecurePayload) => void;
+  onFileChunkReceived?: (payload: SecurePayload, receivedChunks: number, totalChunks: number) => void;
+  onFileTransferComplete?: (fileId: string, headerPayload: SecurePayload, chunkPayloads: SecurePayload[]) => void;
 }
 
 export class P2PManager {
@@ -14,6 +18,13 @@ export class P2PManager {
   private peerConnections: Map<string, RTCPeerConnection> = new Map();
   private dataChannels: Map<string, RTCDataChannel> = new Map();
   private callbacks: P2PManagerCallbacks;
+
+  private incomingFileBuffers: Map<string, {
+    header: SecurePayload;
+    chunks: Map<number, SecurePayload>;
+  }> = new Map();
+  private iceCandidateQueues: Map<string, RTCIceCandidateInit[]> = new Map();
+  private iceRestartAttempts: Map<string, number> = new Map();
 
   constructor(backendUrl: string, callbacks: P2PManagerCallbacks) {
     this.callbacks = callbacks;
@@ -61,9 +72,13 @@ export class P2PManager {
         this.dataChannels.set(peerId, dataChannel);
         this.setupDataChannel(dataChannel, peerId);
 
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        this.socket.emit('webrtc-offer', { recipientId: peerId, payload: offer });
+        try {
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+          this.socket.emit('webrtc-offer', { recipientId: peerId, payload: offer });
+        } catch (err) {
+          console.error(`Failed to create/send offer to ${peerId}:`, err);
+        }
       });
     });
 
@@ -73,28 +88,70 @@ export class P2PManager {
     });
 
     this.socket.on('webrtc-offer', async ({ senderId, payload }) => {
-      const peerConnection = this.peerConnections.get(senderId) ?? this.createPeerConnection(senderId);
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
+      let peerConnection = this.peerConnections.get(senderId);
+      if (!peerConnection) {
+        peerConnection = this.createPeerConnection(senderId);
+      }
 
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      this.socket.emit('webrtc-answer', { recipientId: senderId, payload: answer });
+      const isPolite = Boolean(this.socket.id && this.socket.id < senderId);
+      const offerCollision = peerConnection.signalingState !== 'stable';
+
+      if (offerCollision) {
+        if (isPolite) {
+          try {
+            await peerConnection.setLocalDescription({ type: 'rollback' });
+          } catch (err) {
+            console.warn(`Rollback offer failed for ${senderId}:`, err);
+            return;
+          }
+        } else {
+          console.log(`Impolite peer ignoring offer collision from ${senderId}`);
+          return;
+        }
+      }
+
+      try {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
+        await this.processQueuedIceCandidates(senderId, peerConnection);
+
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        this.socket.emit('webrtc-answer', { recipientId: senderId, payload: answer });
+      } catch (err) {
+        console.error(`Failed to process WebRTC offer from ${senderId}:`, err);
+      }
     });
 
     this.socket.on('webrtc-answer', async ({ senderId, payload }) => {
       const peerConnection = this.peerConnections.get(senderId);
-      if (peerConnection) {
+      if (!peerConnection) return;
+
+      if (peerConnection.signalingState !== 'have-local-offer') {
+        console.warn(`Ignoring WEBRTC answer from ${senderId} because signalingState is '${peerConnection.signalingState}' (expected 'have-local-offer')`);
+        return;
+      }
+
+      try {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
+        await this.processQueuedIceCandidates(senderId, peerConnection);
+      } catch (err) {
+        console.warn(`Failed to set remote answer for ${senderId}:`, err);
       }
     });
 
     this.socket.on('new-ice-candidate', async ({ senderId, payload }) => {
       const peerConnection = this.peerConnections.get(senderId);
       if (peerConnection) {
-        try {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(payload));
-        } catch (err) {
-          console.warn(`Error adding ICE candidate for ${senderId}:`, err);
+        if (peerConnection.remoteDescription && peerConnection.remoteDescription.type) {
+          try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(payload));
+          } catch (err) {
+            console.warn(`Error adding ICE candidate for ${senderId}:`, err);
+          }
+        } else {
+          const queue = this.iceCandidateQueues.get(senderId) || [];
+          queue.push(payload);
+          this.iceCandidateQueues.set(senderId, queue);
         }
       }
     });
@@ -111,7 +168,31 @@ export class P2PManager {
 
   private createPeerConnection(peerId: string): RTCPeerConnection {
     const peerConnection = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      iceCandidatePoolSize: 10,
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.services.mozilla.com' },
+        { urls: 'stun:openrelay.metered.ca:80' },
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
+      ]
     });
 
     peerConnection.onicecandidate = (event) => {
@@ -123,9 +204,16 @@ export class P2PManager {
     peerConnection.oniceconnectionstatechange = () => {
       const state = peerConnection.iceConnectionState;
       console.log(`Peer ${peerId} ICE connection state: ${state}`);
-      if (state === 'disconnected' || state === 'failed') {
-        console.warn(`ICE connection state '${state}' for peer ${peerId}. Initiating auto-reconnect / ICE restart...`);
-        this.attemptPeerIceRestart(peerId, peerConnection);
+      if (state === 'connected' || state === 'completed') {
+        this.iceRestartAttempts.delete(peerId);
+      } else if (state === 'disconnected' || state === 'failed') {
+        const attempts = this.iceRestartAttempts.get(peerId) || 0;
+        if (attempts < 5) {
+          console.warn(`ICE connection state '${state}' for peer ${peerId}. Initiating auto-reconnect / ICE restart (attempt ${attempts + 1}/5)...`);
+          this.attemptPeerIceRestart(peerId, peerConnection);
+        } else {
+          console.warn(`ICE connection state '${state}' for peer ${peerId}. Max ICE restart attempts reached (5/5).`);
+        }
       }
     };
 
@@ -139,13 +227,36 @@ export class P2PManager {
     return peerConnection;
   }
 
+  private async processQueuedIceCandidates(peerId: string, peerConnection: RTCPeerConnection): Promise<void> {
+    const queue = this.iceCandidateQueues.get(peerId);
+    if (!queue || queue.length === 0) return;
+    this.iceCandidateQueues.delete(peerId);
+
+    for (const candidate of queue) {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.warn(`Error processing queued ICE candidate for ${peerId}:`, err);
+      }
+    }
+  }
+
   private async attemptPeerIceRestart(peerId: string, peerConnection: RTCPeerConnection): Promise<void> {
+    const attempts = this.iceRestartAttempts.get(peerId) || 0;
+    this.iceRestartAttempts.set(peerId, attempts + 1);
+
+    const isInitiator = Boolean(!this.socket.id || this.socket.id > peerId);
+    if (!isInitiator) {
+      console.log(`Peer ${peerId} ICE restart needed. Waiting for peer ${peerId} to initiate restart offer...`);
+      return;
+    }
+
     try {
       if (peerConnection.signalingState === 'stable') {
         const offer = await peerConnection.createOffer({ iceRestart: true });
         await peerConnection.setLocalDescription(offer);
         this.socket.emit('webrtc-offer', { recipientId: peerId, payload: offer });
-        console.log(`Sent ICE restart offer to ${peerId}`);
+        console.log(`Sent ICE restart offer to ${peerId} (attempt ${attempts + 1}/5)`);
       }
     } catch (err) {
       console.error(`Failed to perform ICE restart for ${peerId}:`, err);
@@ -163,11 +274,53 @@ export class P2PManager {
     channel.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as SecurePayload;
-        this.callbacks.onMessageReceived(payload);
+        if (payload.type === 'file-header') {
+          this.handleIncomingFileHeader(payload);
+        } else if (payload.type === 'file-chunk') {
+          this.handleIncomingFileChunk(payload);
+        } else {
+          this.callbacks.onMessageReceived(payload);
+        }
       } catch (err) {
         console.error(`Failed to parse incoming P2P message from ${peerId}:`, err);
       }
     };
+  }
+
+  private handleIncomingFileHeader(payload: SecurePayload): void {
+    if (!payload.fileMetadata) return;
+    const fileId = payload.fileMetadata.fileId;
+    this.incomingFileBuffers.set(fileId, {
+      header: payload,
+      chunks: new Map<number, SecurePayload>()
+    });
+
+    this.callbacks.onFileHeaderReceived?.(payload);
+    this.callbacks.onMessageReceived(payload);
+  }
+
+  private handleIncomingFileChunk(payload: SecurePayload): void {
+    if (!payload.chunkMetadata) return;
+    const { fileId, chunkIndex, totalChunks } = payload.chunkMetadata;
+    const fileEntry = this.incomingFileBuffers.get(fileId);
+
+    if (fileEntry) {
+      fileEntry.chunks.set(chunkIndex, payload);
+      const receivedCount = fileEntry.chunks.size;
+
+      this.callbacks.onFileChunkReceived?.(payload, receivedCount, totalChunks);
+
+      if (receivedCount === totalChunks) {
+        const assembled: SecurePayload[] = [];
+        for (let i = 0; i < totalChunks; i++) {
+          const chunkPayload = fileEntry.chunks.get(i);
+          if (chunkPayload) assembled.push(chunkPayload);
+        }
+
+        this.callbacks.onFileTransferComplete?.(fileId, fileEntry.header, assembled);
+        this.incomingFileBuffers.delete(fileId);
+      }
+    }
   }
 
   public broadcastMessage(payload: SecurePayload): void {
@@ -181,6 +334,47 @@ export class P2PManager {
     });
   }
 
+  public async broadcastChunkWithBackpressure(payload: SecurePayload): Promise<void> {
+    const messageString = JSON.stringify(payload);
+
+    const sendPromises = Array.from(this.dataChannels.values()).map((channel) => {
+      return new Promise<void>((resolve) => {
+        if (channel.readyState !== 'open') {
+          resolve();
+          return;
+        }
+
+        channel.bufferedAmountLowThreshold = 65536; // 64 KB High-Water Mark
+
+        const trySend = () => {
+          if (channel.bufferedAmount > channel.bufferedAmountLowThreshold) {
+            channel.onbufferedamountlow = () => {
+              channel.onbufferedamountlow = null;
+              trySend();
+            };
+          } else {
+            channel.send(messageString);
+            resolve();
+          }
+        };
+
+        trySend();
+      });
+    });
+
+    await Promise.all(sendPromises);
+  }
+
+  public async sendFilePayloads(
+    headerPayload: SecurePayload,
+    chunkPayloads: SecurePayload[]
+  ): Promise<void> {
+    this.broadcastMessage(headerPayload);
+    for (const chunkPayload of chunkPayloads) {
+      await this.broadcastChunkWithBackpressure(chunkPayload);
+    }
+  }
+
   public disconnectPeer(peerId: string): void {
     const peerConnection = this.peerConnections.get(peerId);
     if (peerConnection) {
@@ -188,6 +382,8 @@ export class P2PManager {
       this.peerConnections.delete(peerId);
     }
     this.dataChannels.delete(peerId);
+    this.iceCandidateQueues.delete(peerId);
+    this.iceRestartAttempts.delete(peerId);
     console.log(`Client ${peerId} disconnected.`);
   }
 
@@ -195,6 +391,11 @@ export class P2PManager {
     this.peerConnections.forEach((pc) => pc.close());
     this.peerConnections.clear();
     this.dataChannels.clear();
+    this.incomingFileBuffers.clear();
+    this.iceCandidateQueues.clear();
+    this.iceRestartAttempts.clear();
     this.socket.disconnect();
   }
 }
+
+
