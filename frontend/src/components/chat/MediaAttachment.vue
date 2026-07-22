@@ -110,11 +110,11 @@ onUnmounted(() => {
 
 <style scoped>
 .media-attachment-card {
-  margin-top: 8px;
+  margin-top: 0.5rem;
   background-color: #2a2a2a;
   border: 1px solid #3a3a3a;
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 0.5rem;
+  padding: 0.625rem;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -122,7 +122,7 @@ onUnmounted(() => {
 .transfer-progress {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
   font-size: 0.85rem;
   color: #ccc;
 }
@@ -130,16 +130,16 @@ onUnmounted(() => {
 .transfer-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .progress-bar-track {
-  height: 6px;
+  height: 0.375rem;
   background-color: #444;
-  border-radius: 3px;
+  border-radius: 0.2rem;
   overflow: hidden;
 }
 
@@ -156,7 +156,7 @@ onUnmounted(() => {
 }
 
 .media-preview-wrapper {
-  border-radius: 6px;
+  border-radius: 0.375rem;
   overflow: hidden;
 }
 
@@ -165,17 +165,17 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 10px;
+  padding: 1.25rem 0.625rem;
   background-color: #1f1f1f;
   border: 1px dashed #444;
-  border-radius: 6px;
-  gap: 10px;
+  border-radius: 0.375rem;
+  gap: 0.625rem;
 }
 
 .media-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   font-size: 0.85rem;
   color: #aaa;
 }
@@ -183,8 +183,8 @@ onUnmounted(() => {
 .media-type-badge {
   background-color: #333;
   color: #00ff00;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
   font-size: 0.7rem;
   font-weight: bold;
 }
@@ -193,8 +193,8 @@ onUnmounted(() => {
   background-color: #00ff00;
   color: #000;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -207,7 +207,7 @@ onUnmounted(() => {
 .revealed-media-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .media-toolbar {
@@ -216,13 +216,13 @@ onUnmounted(() => {
   align-items: center;
   font-size: 0.8rem;
   color: #aaa;
-  padding-bottom: 4px;
+  padding-bottom: 0.25rem;
   border-bottom: 1px solid #333;
 }
 
 .toolbar-actions {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
   align-items: center;
 }
 
@@ -246,8 +246,8 @@ onUnmounted(() => {
 .embedded-image,
 .embedded-video {
   max-width: 100%;
-  max-height: 350px;
-  border-radius: 4px;
+  max-height: 22rem;
+  border-radius: 0.25rem;
   display: block;
 }
 
@@ -255,13 +255,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .file-details {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   overflow: hidden;
 }
 
@@ -293,8 +293,8 @@ onUnmounted(() => {
   background-color: #333;
   color: #00ff00;
   border: 1px solid #00ff00;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.25rem;
   text-decoration: none;
   font-size: 0.8rem;
   white-space: nowrap;
@@ -310,8 +310,8 @@ onUnmounted(() => {
   background-color: #3a2222;
   color: #ffaaaa;
   border: 1px solid #773333;
-  border-radius: 4px;
-  padding: 10px;
+  border-radius: 0.25rem;
+  padding: 0.625rem;
   font-size: 0.85rem;
 }
 </style>

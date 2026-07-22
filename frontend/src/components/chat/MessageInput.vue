@@ -1,7 +1,14 @@
 <template>
   <div class="input-container">
-    <div v-if="fileError" class="file-error-banner">
-      ⚠️ {{ fileError }}
+    <div class="toast-expand-wrapper" :class="{ 'is-expanded': !!fileError }">
+      <div class="toast-expand-inner">
+        <transition name="toast-fade">
+          <div v-if="fileError" class="file-error-toast" role="alert">
+            <span class="toast-message">⚠️ {{ fileError }}</span>
+            <button type="button" class="toast-close-btn" @click="dismissToast" title="Dismiss notification">✕</button>
+          </div>
+        </transition>
+      </div>
     </div>
 
     <div class="input-area p-d-flex p-jc-between p-ai-center">
@@ -45,15 +52,36 @@ const fileError = ref<string | null>(null);
 const messageInputRef = ref<any>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
+let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const showFileToast = (msg: string) => {
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+  }
+  fileError.value = msg;
+  toastTimeout = setTimeout(() => {
+    fileError.value = null;
+    toastTimeout = null;
+  }, 5000);
+};
+
+const dismissToast = () => {
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+    toastTimeout = null;
+  }
+  fileError.value = null;
+};
+
 const handleSend = () => {
   if (!textInput.value.trim()) return;
   emit('send', textInput.value);
   textInput.value = '';
-  fileError.value = null;
+  dismissToast();
 };
 
 const triggerFilePicker = () => {
-  fileError.value = null;
+  dismissToast();
   fileInputRef.value?.click();
 };
 
@@ -63,14 +91,14 @@ const handleFileSelected = (event: Event) => {
   if (!file) return;
 
   if (file.size > MAX_FILE_SIZE) {
-    fileError.value = `File "${file.name}" (${formatFileSize(file.size)}) exceeds the maximum allowed size of 25 MB.`;
+    showFileToast(`File "${file.name}" (${formatFileSize(file.size)}) exceeds the maximum allowed size of 25 MB.`);
     target.value = '';
     return;
   }
 
   emit('sendFile', file);
   target.value = '';
-  fileError.value = null;
+  dismissToast();
 };
 
 const handleGlobalKeyPress = (event: KeyboardEvent) => {
@@ -90,6 +118,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeyPress);
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+  }
 });
 </script>
 
@@ -97,7 +128,7 @@ onUnmounted(() => {
 .input-container {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  position: relative;
 }
 
 .input-area {
@@ -105,16 +136,72 @@ onUnmounted(() => {
 }
 
 .file-attach-btn {
-  margin-right: 4px;
+  margin-right: 0.25rem;
 }
 
-.file-error-banner {
-  background-color: #5a1a1a;
-  color: #ff8888;
-  border: 1px solid #aa3333;
-  border-radius: 4px;
-  padding: 6px 12px;
+.toast-expand-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.toast-expand-wrapper.is-expanded {
+  grid-template-rows: 1fr;
+}
+
+.toast-expand-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0.375rem;
+}
+
+.file-error-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #4a1818;
+  color: #ffaaaa;
+  border: 1px solid #993333;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.4);
+}
+
+.toast-message {
+  flex: 1;
+  word-break: break-word;
+}
+
+.toast-close-btn {
+  background: transparent;
+  border: none;
+  color: #ffaaaa;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 0.625rem;
+  padding: 0 0.25rem;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.toast-close-btn:hover {
+  opacity: 1;
+  color: #ffffff;
+}
+
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-0.25rem);
 }
 </style>
 

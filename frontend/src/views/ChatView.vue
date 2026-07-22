@@ -44,18 +44,20 @@ const crypto = useCryptoStore();
 const { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus } = useP2P();
 
 const passwordInput = ref('');
-const displayName = ref('Anonymous');
+const displayName = ref('');
 const showUndecrypted = ref(true);
 const setupStarted = ref(false);
 
 const sendMessage = (text: string) => {
   if (!text || (!setupStarted.value && !crypto.isReady)) return;
-  sendP2PMessage(text, displayName.value);
+  const nameToUse = displayName.value.trim() || 'Anonymous';
+  sendP2PMessage(text, nameToUse);
 };
 
 const handleSendFile = (file: File) => {
   if (!file || (!setupStarted.value && !crypto.isReady)) return;
-  sendP2PFile(file, displayName.value);
+  const nameToUse = displayName.value.trim() || 'Anonymous';
+  sendP2PFile(file, nameToUse);
 };
 
 
@@ -77,7 +79,7 @@ const finalizeKeySetup = () => {
 }
 .chat-pane {
   flex: 1;
-  padding: 20px;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #444;
@@ -90,18 +92,18 @@ const finalizeKeySetup = () => {
 }
 .crypto-prompt {
   text-align: center;
-  margin-top: 50px;
+  margin-top: 3rem;
   color: #888;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .grid-container {
     flex-direction: column;
   }
   .chat-pane {
     border-right: none;
     border-bottom: 1px solid #444;
-    padding-top: 60px;
+    padding-top: 3.75rem;
   }
 }
 </style>

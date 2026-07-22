@@ -40,7 +40,7 @@ watch(
 <style scoped>
 .debug-pane {
   flex: 1;
-  padding: 20px;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   background-color: #1e1e1e;
@@ -51,8 +51,8 @@ watch(
   flex-grow: 1;
   overflow-y: auto;
   background-color: #000;
-  padding: 10px;
-  border-radius: 5px;
+  padding: 0.625rem;
+  border-radius: 0.3125rem;
   min-height: 0;
 }
 .terminal-feed pre {
@@ -61,9 +61,9 @@ watch(
   margin: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .debug-pane {
-    min-height: 300px;
+    min-height: 18.75rem;
   }
 }
 </style>

@@ -82,18 +82,18 @@ watch(
 }
 .controls-bar {
   display: flex;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 }
 .message-feed {
   flex-grow: 1;
   overflow-y: auto;
   border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 0.625rem;
+  margin-bottom: 0.625rem;
   min-height: 0;
 }
 .message-item {
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
   word-break: break-word;
 }
 .timestamp {

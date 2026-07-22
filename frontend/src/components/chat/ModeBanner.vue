@@ -33,15 +33,15 @@ defineProps<{
 .banner-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 .mode-banner {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  border-radius: 6px;
+  gap: 0.25rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.375rem;
   border: 1px solid transparent;
   line-height: 1.4;
 }

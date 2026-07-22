@@ -54,11 +54,32 @@ const cipherOptions = [
 <style scoped>
 .setup-bar {
   display: flex;
-  margin-bottom: 10px;
+  align-items: center;
+  margin-bottom: 0.625rem;
 }
+
 .setup-bar input,
 .setup-bar select,
 .setup-bar button {
-  margin-right: 10px;
+  margin-right: 0.625rem;
+}
+
+:deep(.p-inputtext),
+:deep(.p-dropdown) {
+  height: 2.375rem;
+  box-sizing: border-box;
+}
+
+:deep(.p-dropdown) {
+  display: inline-flex;
+  align-items: center;
+}
+
+:deep(.p-dropdown .p-dropdown-label) {
+  display: flex;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  height: 100%;
 }
 </style>
