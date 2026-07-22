@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js';
+import { CipherFactory } from '@/crypto/cipher.strategy';
 
 export interface DerivedCryptoKeys {
   aesKey: CryptoJS.lib.WordArray;
@@ -32,4 +33,6 @@ export const deriveCryptoKeys = (
   };
 };
 
-export const getIvLength = (cipher: 'AES' | 'DES') => (cipher === 'AES' ? 16 : 8);
+export const getIvLength = (cipher: 'AES' | 'DES'): number => {
+  return CipherFactory.getStrategy(cipher).ivByteLength;
+};

@@ -5,6 +5,9 @@
     "moduleResolution": "NodeNext",
     "rootDir": "./src",
     "outDir": "./dist",
+    "paths": {
+      "@shared/*": ["../shared/*"]
+    },
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true

@@ -1,19 +1,14 @@
 import { createServer } from 'node:http';
 import { configureSockets } from './socket.js';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { loadConfig } from './config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config.json'), 'utf-8'));
-const PORT = process.env.PORT || config.BACKEND_PORT;
+const config = loadConfig();
+const PORT = config.BACKEND_PORT;
 
 const server = createServer((req, res) => {
     res.writeHead(200, {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': config.CORS_ORIGIN
     });
     res.end(JSON.stringify({
         status: 'success',

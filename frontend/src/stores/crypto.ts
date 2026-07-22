@@ -1,9 +1,16 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import type { SecurePayload } from '../../../shared/types/payload';
+import type { SecurePayload } from '@shared/types/payload';
 import CryptoJS from 'crypto-js';
 import { getCryptoDerivationSettings } from '@/config/crypto';
-import { deriveCryptoKeys, getIvLength } from '@/utils/crypto-keys';
+import { deriveCryptoKeys } from '@/utils/crypto-keys';
+import { CipherFactory } from '@/crypto/cipher.strategy';
+
+export interface DecryptResult {
+  success: boolean;
+  plaintext: string;
+  senderDisplayName: string;
+}
 
 export const useCryptoStore = defineStore('crypto', () => {
   const activeBitLength = ref<128 | 56>(128);
@@ -12,7 +19,7 @@ export const useCryptoStore = defineStore('crypto', () => {
   let lastPassword: string | null = null;
   let sharedKeys: ReturnType<typeof deriveCryptoKeys> | null = null;
 
-  const setupKeys = (password: string) => {
+  const setupKeys = (password: string): void => {
     if (!password || password.trim().length === 0) {
       isReady.value = false;
       lastPassword = null;
@@ -34,27 +41,12 @@ export const useCryptoStore = defineStore('crypto', () => {
       throw new Error('Crypto store not ready. Call setupKeys first.');
     }
 
-    const cipher = activeBitLength.value === 128 ? 'AES' : 'DES';
-    const iv = CryptoJS.lib.WordArray.random(getIvLength(cipher));
+    const strategy = CipherFactory.getStrategyByBitLength(activeBitLength.value);
+    const iv = CryptoJS.lib.WordArray.random(strategy.ivByteLength);
     const ivHex = iv.toString();
 
-    let ciphertext: CryptoJS.lib.CipherParams;
-
-    if (cipher === 'AES') {
-      ciphertext = CryptoJS.AES.encrypt(plaintext, sharedKeys.aesKey, {
-        iv: iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-      });
-    } else {
-      ciphertext = CryptoJS.DES.encrypt(plaintext, sharedKeys.desKey, {
-        iv: iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-      });
-    }
-
-    const ciphertextHex = ciphertext.toString();
+    const key = strategy.cipherName === 'AES' ? sharedKeys.aesKey : sharedKeys.desKey;
+    const ciphertextHex = strategy.encrypt(plaintext, key, iv);
     const hmac = CryptoJS.HmacSHA256(ciphertextHex, sharedKeys.hmacKey).toString();
 
     return {
@@ -62,15 +54,13 @@ export const useCryptoStore = defineStore('crypto', () => {
       iv: ivHex,
       ciphertext: ciphertextHex,
       version: 1,
-      cipher,
+      cipher: strategy.cipherName,
       hmac,
       timestamp: new Date().toISOString()
     };
   };
 
-  const decryptMessage = (
-    payload: SecurePayload
-  ): { success: boolean; plaintext: string; senderDisplayName: string } => {
+  const decryptMessage = (payload: SecurePayload): DecryptResult => {
     if (!isReady.value || !sharedKeys) {
       return {
         success: false,
@@ -99,30 +89,18 @@ export const useCryptoStore = defineStore('crypto', () => {
         }
       }
 
-      const iv = CryptoJS.enc.Hex.parse(payload.iv);
-      let plaintext: string;
-
-      if (payload.cipher === 'AES') {
-        const decrypted = CryptoJS.AES.decrypt(payload.ciphertext, sharedKeys.aesKey, {
-          iv: iv,
-          mode: CryptoJS.mode.CBC,
-          padding: CryptoJS.pad.Pkcs7
-        });
-        plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-      } else if (payload.cipher === 'DES') {
-        const decrypted = CryptoJS.DES.decrypt(payload.ciphertext, sharedKeys.desKey, {
-          iv: iv,
-          mode: CryptoJS.mode.CBC,
-          padding: CryptoJS.pad.Pkcs7
-        });
-        plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-      } else {
+      if (payload.cipher !== 'AES' && payload.cipher !== 'DES') {
         return {
           success: false,
           plaintext: 'Unknown cipher',
           senderDisplayName: payload.senderDisplayName
         };
       }
+
+      const strategy = CipherFactory.getStrategy(payload.cipher);
+      const iv = CryptoJS.enc.Hex.parse(payload.iv);
+      const key = payload.cipher === 'AES' ? sharedKeys.aesKey : sharedKeys.desKey;
+      const plaintext = strategy.decrypt(payload.ciphertext, key, iv);
 
       if (!plaintext) {
         return {
@@ -147,7 +125,7 @@ export const useCryptoStore = defineStore('crypto', () => {
     }
   };
 
-  const rekey = () => {
+  const rekey = (): void => {
     if (!lastPassword) {
       isReady.value = false;
       sharedKeys = null;
