@@ -6,10 +6,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = __dirname;
 
-const config = JSON.parse(readFileSync(path.join(rootDir, 'config.json'), 'utf-8'));
+const configPath = path.join(rootDir, 'config.json');
 const envPath = path.join(rootDir, '.env');
 
-// Read existing .env into a key-value map to preserve existing secrets/PI variables
+const config = JSON.parse(readFileSync(configPath, 'utf-8'));
 const envMap = new Map();
 
 if (existsSync(envPath)) {
@@ -27,7 +27,19 @@ if (existsSync(envPath)) {
   }
 }
 
-// Sync config values
+// Bidirectional sync for TURN credentials between .env and config.json
+if (envMap.get('TURN_SERVER_URL')) {
+  config.TURN_SERVER_URL = envMap.get('TURN_SERVER_URL');
+  config.TURN_USERNAME = envMap.get('TURN_USERNAME') || '';
+  config.TURN_PASSWORD = envMap.get('TURN_PASSWORD') || '';
+  writeFileSync(configPath, JSON.stringify(config, null, 2));
+} else if (config.TURN_SERVER_URL) {
+  envMap.set('TURN_SERVER_URL', config.TURN_SERVER_URL);
+  envMap.set('TURN_USERNAME', config.TURN_USERNAME);
+  envMap.set('TURN_PASSWORD', config.TURN_PASSWORD);
+}
+
+// Sync config values into .env
 envMap.set('FRONTEND_PORT', config.FRONTEND_PORT || 5173);
 envMap.set('BACKEND_PORT', config.BACKEND_PORT || 3000);
 
@@ -39,4 +51,4 @@ if (config.PI_SSH_KEY) envMap.set('PI_SSH_KEY', config.PI_SSH_KEY);
 
 const envLines = Array.from(envMap.entries()).map(([k, v]) => `${k}=${v}`);
 writeFileSync(envPath, `${envLines.join('\n')}\n`);
-console.log('Synced .env from config.json (preserved custom .env variables)');
+console.log('Synced .env and config.json (preserved custom .env TURN secrets)');

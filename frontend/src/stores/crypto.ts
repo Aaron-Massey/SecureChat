@@ -5,6 +5,7 @@ import CryptoJS from 'crypto-js';
 import { getCryptoDerivationSettings } from '@/config/crypto';
 import { deriveCryptoKeys } from '@/utils/crypto-keys';
 import { CipherFactory } from '@/crypto/cipher.strategy';
+import { KeyRatchetContext } from '@/patterns/keyRatchetContext';
 
 export interface DecryptResult {
   success: boolean;
@@ -14,22 +15,30 @@ export interface DecryptResult {
 
 export const useCryptoStore = defineStore('crypto', () => {
   const activeBitLength = ref<128 | 56>(128);
+  const ratchetMode = ref<'hash' | 'static'>('hash');
   const isReady = ref(false);
   const isEncrypted = computed(() => isReady.value);
-  let lastPassword: string | null = null;
-  let sharedKeys: ReturnType<typeof deriveCryptoKeys> | null = null;
+  const keyVersion = ref<number>(1);
 
-  const setupKeys = (password: string): void => {
+  let lastPassword: string | null = null;
+  let ratchetContext: KeyRatchetContext | null = null;
+
+  const setupKeys = (password: string, mode: 'hash' | 'static' = ratchetMode.value): void => {
     if (!password || password.trim().length === 0) {
       isReady.value = false;
       lastPassword = null;
-      sharedKeys = null;
+      ratchetContext = null;
+      keyVersion.value = 1;
       return;
     }
 
     const { salt, iterations } = getCryptoDerivationSettings();
-    sharedKeys = deriveCryptoKeys(password, salt, iterations);
+    const initialKeys = deriveCryptoKeys(password, salt, iterations);
+    
+    ratchetMode.value = mode;
+    ratchetContext = new KeyRatchetContext(initialKeys, 1, mode);
     lastPassword = password;
+    keyVersion.value = ratchetContext.version;
     isReady.value = true;
   };
 
@@ -37,31 +46,40 @@ export const useCryptoStore = defineStore('crypto', () => {
     plaintext: string,
     senderDisplayName: string
   ): SecurePayload => {
-    if (!isReady.value || !sharedKeys) {
+    if (!isReady.value || !ratchetContext) {
       throw new Error('Crypto store not ready. Call setupKeys first.');
     }
+
+    const currentVersion = ratchetContext.version;
+    const currentKeys = ratchetContext.keys;
 
     const strategy = CipherFactory.getStrategyByBitLength(activeBitLength.value);
     const iv = CryptoJS.lib.WordArray.random(strategy.ivByteLength);
     const ivHex = iv.toString();
 
-    const key = strategy.cipherName === 'AES' ? sharedKeys.aesKey : sharedKeys.desKey;
+    const key = strategy.cipherName === 'AES' ? currentKeys.aesKey : currentKeys.desKey;
     const ciphertextHex = strategy.encrypt(plaintext, key, iv);
-    const hmac = CryptoJS.HmacSHA256(ciphertextHex, sharedKeys.hmacKey).toString();
+    const hmac = CryptoJS.HmacSHA256(ciphertextHex, currentKeys.hmacKey).toString();
 
-    return {
+    const payload: SecurePayload = {
       senderDisplayName,
       iv: ivHex,
       ciphertext: ciphertextHex,
-      version: 1,
+      version: currentVersion,
       cipher: strategy.cipherName,
       hmac,
       timestamp: new Date().toISOString()
     };
+
+    // Advance ratchet step for next message if ratcheting enabled
+    ratchetContext.ratchetStep();
+    keyVersion.value = ratchetContext.version;
+
+    return payload;
   };
 
   const decryptMessage = (payload: SecurePayload): DecryptResult => {
-    if (!isReady.value || !sharedKeys) {
+    if (!isReady.value || !ratchetContext) {
       return {
         success: false,
         plaintext: 'Crypto store not ready',
@@ -78,8 +96,21 @@ export const useCryptoStore = defineStore('crypto', () => {
         };
       }
 
+      const targetVersion = payload.version ?? 1;
+      const targetKeys = ratchetContext.getKeysForVersion(targetVersion);
+
+      if (!targetKeys) {
+        return {
+          success: false,
+          plaintext: `Key version ${targetVersion} unavailable or expired`,
+          senderDisplayName: payload.senderDisplayName
+        };
+      }
+
+      keyVersion.value = ratchetContext.version;
+
       if (payload.hmac) {
-        const calculatedHmac = CryptoJS.HmacSHA256(payload.ciphertext, sharedKeys.hmacKey).toString();
+        const calculatedHmac = CryptoJS.HmacSHA256(payload.ciphertext, targetKeys.hmacKey).toString();
         if (calculatedHmac !== payload.hmac) {
           return {
             success: false,
@@ -99,7 +130,7 @@ export const useCryptoStore = defineStore('crypto', () => {
 
       const strategy = CipherFactory.getStrategy(payload.cipher);
       const iv = CryptoJS.enc.Hex.parse(payload.iv);
-      const key = payload.cipher === 'AES' ? sharedKeys.aesKey : sharedKeys.desKey;
+      const key = payload.cipher === 'AES' ? targetKeys.aesKey : targetKeys.desKey;
       const plaintext = strategy.decrypt(payload.ciphertext, key, iv);
 
       if (!plaintext) {
@@ -128,17 +159,20 @@ export const useCryptoStore = defineStore('crypto', () => {
   const rekey = (): void => {
     if (!lastPassword) {
       isReady.value = false;
-      sharedKeys = null;
+      ratchetContext = null;
+      keyVersion.value = 1;
       return;
     }
 
-    setupKeys(lastPassword);
+    setupKeys(lastPassword, ratchetMode.value);
   };
 
   return {
     activeBitLength,
+    ratchetMode,
     isReady,
     isEncrypted,
+    keyVersion,
     setupKeys,
     encryptMessage,
     decryptMessage,

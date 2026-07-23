@@ -1,6 +1,8 @@
 import { io, Socket } from 'socket.io-client';
 import type { SecurePayload } from '@shared/types/payload';
 import { base64ToArrayBuffer } from '@/utils/fileChunker';
+import { PeerConnectionFactory } from '@/factories/peerConnectionFactory';
+import type { IceServerConfig } from '@/strategies/iceServerStrategy';
 
 export type ConnectionStatus = 'connected' | 'reconnecting' | 'disconnected';
 
@@ -18,6 +20,7 @@ export class P2PManager {
   private peerConnections: Map<string, RTCPeerConnection> = new Map();
   private dataChannels: Map<string, RTCDataChannel> = new Map();
   private callbacks: P2PManagerCallbacks;
+  private peerConnectionFactory: PeerConnectionFactory;
 
   private incomingFileBuffers: Map<string, {
     header: SecurePayload;
@@ -26,8 +29,9 @@ export class P2PManager {
   private iceCandidateQueues: Map<string, RTCIceCandidateInit[]> = new Map();
   private iceRestartAttempts: Map<string, number> = new Map();
 
-  constructor(backendUrl: string, callbacks: P2PManagerCallbacks) {
+  constructor(backendUrl: string, callbacks: P2PManagerCallbacks, iceConfig?: IceServerConfig) {
     this.callbacks = callbacks;
+    this.peerConnectionFactory = PeerConnectionFactory.createWithConfig(iceConfig);
     this.socket = io(backendUrl, {
       reconnection: true,
       reconnectionAttempts: 20,
@@ -167,38 +171,19 @@ export class P2PManager {
   }
 
   private createPeerConnection(peerId: string): RTCPeerConnection {
-    const peerConnection = new RTCPeerConnection({
-      iceCandidatePoolSize: 10,
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        { urls: 'stun:stun.services.mozilla.com' },
-        { urls: 'stun:openrelay.metered.ca:80' },
-        {
-          urls: 'turn:openrelay.metered.ca:80',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        }
-      ]
-    });
+    const peerConnection = this.peerConnectionFactory.createPeerConnection();
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
+        const cStr = event.candidate.candidate || '';
+        const cType = cStr.includes('typ host') ? 'HOST (LAN)' : cStr.includes('typ srflx') ? 'STUN (Public IP)' : cStr.includes('typ relay') ? 'TURN (Relay)' : 'UNKNOWN';
+        console.log(`[ICE GENERATED] Peer ${peerId} candidate generated: [${cType}]`);
         this.socket.emit('new-ice-candidate', { recipientId: peerId, payload: event.candidate });
       }
+    };
+
+    (peerConnection as any).onicecandidateerror = (event: any) => {
+      console.warn(`[ICE CANDIDATE ERROR] Peer ${peerId} error: ${event.errorText || event.errorCode} (server: ${event.url})`);
     };
 
     peerConnection.oniceconnectionstatechange = () => {

@@ -210,6 +210,12 @@ export function useP2P() {
     }
   };
 
+  const iceConfig = {
+    turnUrl: import.meta.env.VITE_TURN_SERVER_URL,
+    turnUsername: import.meta.env.VITE_TURN_USERNAME,
+    turnPassword: import.meta.env.VITE_TURN_PASSWORD
+  };
+
   const p2pManager = new P2PManager(backendUrl, {
     onMessageReceived: handleIncomingMessage,
     onRekeyRequested: handleRekeyRequested,
@@ -217,7 +223,7 @@ export function useP2P() {
     onFileHeaderReceived: handleFileHeaderReceived,
     onFileChunkReceived: handleFileChunkReceived,
     onFileTransferComplete: handleFileTransferComplete
-  });
+  }, iceConfig);
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
     const currentState = stateContext.state;
