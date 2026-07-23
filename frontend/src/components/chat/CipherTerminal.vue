@@ -301,5 +301,5 @@ watch(
 .iv-val { color: var(--accent-purple); }
 .hmac-val { color: var(--accent-emerald); }
 .ciphertext-val { color: var(--accent-cyan); }
-.plaintext-val { color: #fbbf24; }
+.plaintext-val { color: var(--accent-amber); }
 </style>
