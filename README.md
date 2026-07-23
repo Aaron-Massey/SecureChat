@@ -1,6 +1,6 @@
 # SecureChat
 
-SecureChat is a modern, end-to-end encrypted (E2EE) peer-to-peer (WebRTC) chat application built with Vue 3, Pinia, TypeScript, and an Express + Socket.IO signaling backend. It features cryptographic key ratcheting, file chunking, full Docker containerization, and automated deployment scripts for Raspberry Pi 5.
+SecureChat is a modern, end-to-end encrypted (E2EE) peer-to-peer (WebRTC) chat application built with Vue 3, Pinia, TypeScript, and an Express + Socket.IO signaling backend. It features cryptographic key ratcheting, file chunking, full Docker containerization, and automated deployment scripts for remote servers.
 
 ---
 
@@ -11,7 +11,7 @@ SecureChat is a modern, end-to-end encrypted (E2EE) peer-to-peer (WebRTC) chat a
 - **Configurable ICE/TURN Strategy**: Dynamic STUN/TURN server resolution via pluggable strategy patterns.
 - **Encrypted File Sharing**: File chunking and progressive encrypted transfer over WebRTC.
 - **Monorepo Architecture**: Clean separation between Vue 3 frontend workspace and Express/Socket.IO backend workspace.
-- **Docker & Raspberry Pi Ready**: Multi-architecture Docker builds (ARM64 & x86_64) and single-command automated SSH deployment.
+- **Docker & Server Ready**: Multi-architecture Docker builds (ARM64 & x86_64) and single-command automated SSH deployment.
 
 ---
 
@@ -40,7 +40,7 @@ SecureChat incorporates several classic Gang of Four (GOF) design patterns:
 
 - **Node.js**: `^22.18.0` or `>=24.12.0`
 - **npm**: `^10.0.0` or newer
-- **Docker Desktop** *(optional)*: Required for Docker containerization and exporting ARM64 container tarballs.
+- **Docker Desktop** *(optional)*: Required for Docker containerization and exporting container tarballs.
 
 ---
 
@@ -62,7 +62,23 @@ SecureChat incorporates several classic Gang of Four (GOF) design patterns:
 
 ## Configuration & Environment Variables
 
-Project settings reside in `config.json` at the root directory:
+SecureChat uses a dual-configuration approach: non-sensitive default settings are defined in `config.json`, while environment-specific secrets and overrides are stored in `.env`. An example environment file [`.env.example`](.env.example) is provided in the root directory as a template.
+
+### Quick Setup with `.env.example`
+
+1. **Copy the example template to create your local `.env` file**:
+   ```bash
+   cp .env.example .env
+   ```
+   *(Or on Windows PowerShell: `copy .env.example .env`)*
+
+2. **Configure environment variables in `.env` as needed**:
+   - **TURN Server Credentials**: `TURN_SERVER_URL`, `TURN_USERNAME`, `TURN_PASSWORD`
+   - **Remote Server SSH Target**: `SERVER_HOST`, `SERVER_USER`, `SERVER_PATH`, `SERVER_PORT`, `SERVER_SSH_KEY` (or legacy `PI_*` keys)
+   - **Port & Security Overrides**: `FRONTEND_PORT`, `BACKEND_PORT`, `CORS_ORIGIN`, `USE_HTTPS`
+
+### Base Configuration (`config.json`)
+Non-sensitive default settings reside in `config.json` at the root directory:
 
 ```json
 {
@@ -78,23 +94,7 @@ Project settings reside in `config.json` at the root directory:
 ```
 
 ### Environment Variable Sync
-When launching Docker or deployment commands, `npm run docker:sync` automatically generates or updates the `.env` file from `config.json` while preserving your environment secrets.
-
-To configure custom TURN servers or Raspberry Pi deployment SSH settings, add them to your local gitignored `.env` file:
-
-```env
-# Optional Custom TURN Configuration
-TURN_SERVER_URL=turn:your-turn-server.com:3478
-TURN_USERNAME=your_username
-TURN_PASSWORD=your_password
-
-# Raspberry Pi SSH Deployment Target
-PI_HOST=192.168.1.X
-PI_USER=pi
-PI_PORT=22
-PI_PATH=~/securechat
-PI_SSH_KEY=~/.ssh/id_ed25519
-```
+When launching Docker or deployment commands, `npm run docker:sync` automatically generates or updates the `.env` file from `config.json` while preserving your custom environment secrets.
 
 ---
 
@@ -175,35 +175,35 @@ SecureChat includes unit and integration tests written with [Vitest](https://vit
    ```
    *Syncs `.env` parameters and launches frontend (nginx) and backend containers via Docker Compose.*
 
-2. **Export ARM64 Images for Edge Deployment**:
+2. **Export Images for Remote Deployment**:
    ```bash
    npm run docker:export
    ```
-   *Builds multi-architecture ARM64 images and exports tarballs to `./exports/` for Raspberry Pi deployment.*
+   *Builds multi-architecture Docker images and exports tarballs to `./exports/` for remote server deployment.*
 
 ---
 
-## Deploying to Raspberry Pi 5
+## Deploying to Remote Server
 
 ### Option 1: Automated SSH Deployment (Recommended)
-Ensure your `.env` contains your Pi's connection details (`PI_HOST`, `PI_USER`, etc.), then execute:
+Ensure your `.env` contains your server's connection details (`SERVER_HOST`, `SERVER_USER`, etc.), then execute:
 ```bash
-npm run deploy:pi
+npm run deploy:server
 ```
 *You can also pass dynamic CLI flags:*
 ```bash
-npm run deploy:pi -- --host=192.168.1.50 --user=pi --port=22
+npm run deploy:server -- --host=192.168.1.50 --user=deploy --port=22
 ```
 
-### Option 2: Container Update Script on the Pi
-If you cloned the repo directly onto your Raspberry Pi:
+### Option 2: Container Update Script on the Server
+If you cloned the repo directly onto your target server:
 ```bash
-npm run pi:update
+npm run server:update
 ```
-*(or run `sh pi/update-containers.sh` / `sh pi/deploy-git.sh` directly on the Pi).*
+*(or run `sh pi/update-containers.sh` / `sh pi/deploy-git.sh` directly on the server).*
 
 ### Option 3: GitHub Actions CI/CD
-Add `PI_HOST`, `PI_USER`, and `PI_SSH_KEY` to your repository Secrets on GitHub. Pushing to `main` will automatically build ARM64 Docker images and deploy updates to your Raspberry Pi.
+Add `SERVER_HOST`, `SERVER_USER`, and `SERVER_SSH_KEY` to your repository Secrets on GitHub. Pushing to `main` will automatically build Docker images and deploy updates to your remote server.
 
 ---
 

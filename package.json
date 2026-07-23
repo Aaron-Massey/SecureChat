@@ -15,7 +15,9 @@
     "docker:sync": "node docker-sync-env.mjs",
     "docker:up": "npm run docker:sync && docker compose up --build",
     "docker:export": "npm run docker:sync && node docker-export.mjs",
+    "deploy:server": "node deploy-pi.mjs",
     "deploy:pi": "node deploy-pi.mjs",
+    "server:update": "sh pi/update-containers.sh",
     "pi:update": "sh pi/update-containers.sh"
   },
   "repository": {
