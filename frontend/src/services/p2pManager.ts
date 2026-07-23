@@ -1,6 +1,5 @@
 import { io, Socket } from 'socket.io-client';
 import type { SecurePayload } from '@shared/types/payload';
-import { base64ToArrayBuffer } from '@/utils/fileChunker';
 import { PeerConnectionFactory } from '@/factories/peerConnectionFactory';
 import type { IceServerConfig } from '@/strategies/iceServerStrategy';
 
@@ -182,7 +181,7 @@ export class P2PManager {
       }
     };
 
-    (peerConnection as any).onicecandidateerror = (event: any) => {
+    (peerConnection as unknown as { onicecandidateerror: (event: { errorText?: string; errorCode?: number; url?: string }) => void }).onicecandidateerror = (event) => {
       console.warn(`[ICE CANDIDATE ERROR] Peer ${peerId} error: ${event.errorText || event.errorCode} (server: ${event.url})`);
     };
 

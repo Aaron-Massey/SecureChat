@@ -1,18 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('socket.io-client', () => {
-  const listeners: Record<string, Function> = {};
-  const ioListeners: Record<string, Function> = {};
+  const listeners: Record<string, (...args: unknown[]) => void> = {};
+  const ioListeners: Record<string, (...args: unknown[]) => void> = {};
 
   return {
-    io: vi.fn(() => ({
-      on: (event: string, fn: Function) => {
+    io: vi.fn<() => unknown>(() => ({
+      on: (event: string, fn: (...args: unknown[]) => void) => {
         listeners[event] = fn;
       },
-      emit: vi.fn(),
-      disconnect: vi.fn(),
+      emit: vi.fn<(...args: unknown[]) => void>(),
+      disconnect: vi.fn<() => void>(),
       io: {
-        on: (event: string, fn: Function) => {
+        on: (event: string, fn: (...args: unknown[]) => void) => {
           ioListeners[event] = fn;
         }
       },
@@ -28,21 +28,21 @@ describe('P2PManager Auto-Reconnect', () => {
   it('triggers connection status callbacks on socket lifecycle events', () => {
     const statusChanges: string[] = [];
     const manager = new P2PManager('http://localhost:3000', {
-      onMessageReceived: vi.fn(),
-      onRekeyRequested: vi.fn(),
+      onMessageReceived: vi.fn<(...args: unknown[]) => void>(),
+      onRekeyRequested: vi.fn<(...args: unknown[]) => void>(),
       onConnectionStatusChange: (status, detail) => {
         statusChanges.push(`${status}: ${detail}`);
       }
     });
 
-    const socketInstance = (manager as any).socket;
-    socketInstance.__listeners['connect']();
+    const socketInstance = (manager as unknown as { socket: { __listeners: Record<string, (...args: unknown[]) => void>; __ioListeners: Record<string, (...args: unknown[]) => void> } }).socket;
+    socketInstance.__listeners['connect']?.();
     expect(statusChanges).toContain('connected: Connected to signaling server.');
 
-    socketInstance.__listeners['disconnect']('transport close');
+    socketInstance.__listeners['disconnect']?.('transport close');
     expect(statusChanges.some((s) => s.includes('reconnecting'))).toBe(true);
 
-    socketInstance.__ioListeners['reconnect']();
+    socketInstance.__ioListeners['reconnect']?.();
     expect(statusChanges.some((s) => s.includes('Reconnected'))).toBe(true);
 
     manager.destroy();

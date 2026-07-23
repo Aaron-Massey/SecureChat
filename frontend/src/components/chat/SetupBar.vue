@@ -7,7 +7,7 @@
           <i class="pi pi-user input-icon"></i>
           <InputText
             :model-value="displayName"
-            @update:model-value="$emit('update:displayName', $event)"
+            @update:model-value="$emit('update:displayName', $event ?? '')"
             placeholder="Display Name"
             class="cyber-input"
             @input="$emit('inputStarted')"
@@ -20,7 +20,7 @@
           <i class="pi pi-lock input-icon"></i>
           <InputText
             :model-value="passwordInput"
-            @update:model-value="$emit('update:passwordInput', $event)"
+            @update:model-value="$emit('update:passwordInput', $event ?? '')"
             type="password"
             placeholder="Passphrase (leave empty for plaintext)"
             class="cyber-input"
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+// Props & Emits for SetupBar
 
 defineProps<{
   displayName: string;

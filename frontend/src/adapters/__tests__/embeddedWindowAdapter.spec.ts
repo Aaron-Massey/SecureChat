@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { EmbeddedWindowAdapter } from '../embeddedWindowAdapter';
+import { EmbeddedWindowAdapter, type HostMessage } from '../embeddedWindowAdapter';
 
 describe('EmbeddedWindowAdapter (GOF Adapter Pattern)', () => {
   it('instantiates EmbeddedWindowAdapter and checks embedded status', () => {
@@ -9,7 +9,7 @@ describe('EmbeddedWindowAdapter (GOF Adapter Pattern)', () => {
 
   it('subscribes and receives incoming postMessage events', () => {
     const adapter = new EmbeddedWindowAdapter();
-    const mockCallback = vi.fn();
+    const mockCallback = vi.fn<(msg: HostMessage) => void>();
     const unsubscribe = adapter.subscribe(mockCallback);
 
     window.dispatchEvent(

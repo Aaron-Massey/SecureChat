@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { deriveCryptoKeys } from '@/utils/crypto-keys';
-import { HashRatchetStrategy, StaticRatchetStrategy, KeyRatchetFactory } from '../keyRatchet.strategy';
+import { KeyRatchetFactory } from '../keyRatchet.strategy';
 import { KeyRatchetContext } from '@/patterns/keyRatchetContext';
 import { useCryptoStore } from '@/stores/crypto';
 

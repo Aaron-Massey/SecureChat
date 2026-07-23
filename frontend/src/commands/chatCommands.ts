@@ -1,4 +1,3 @@
-import type { SecurePayload } from '@shared/types/payload';
 
 /**
  * Command Pattern: IChatCommand
@@ -12,7 +11,7 @@ export interface IChatCommand {
 
 export class SendTextMessageCommand implements IChatCommand {
   public id: string;
-  public type: 'text' = 'text';
+  public type = 'text' as const;
 
   constructor(
     private sendFn: (text: string, sender: string) => void,
@@ -29,7 +28,7 @@ export class SendTextMessageCommand implements IChatCommand {
 
 export class SendFileMessageCommand implements IChatCommand {
   public id: string;
-  public type: 'file' = 'file';
+  public type = 'file' as const;
 
   constructor(
     private sendFileFn: (file: File, sender: string) => Promise<void>,

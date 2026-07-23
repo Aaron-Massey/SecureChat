@@ -18,8 +18,8 @@ describe('IceServerStrategy (GOF Strategy Pattern)', () => {
     const strategy = new ConfigurableIceStrategy(customConfig);
     const servers = strategy.getIceServers();
 
-    expect(servers[0].username).toBe('securechat');
-    expect(servers[0].credential).toBe('password123');
+    expect(servers[0]!.username).toBe('securechat');
+    expect(servers[0]!.credential).toBe('password123');
     expect(servers.some((s) => typeof s.urls === 'string' && s.urls.includes('transport=tcp'))).toBe(true);
   });
 

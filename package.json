@@ -31,7 +31,8 @@
   },
   "homepage": "https://github.com/Aaron-Massey/SecureChat#readme",
   "devDependencies": {
-    "concurrently": "^10.0.3"
+    "concurrently": "^10.0.3",
+    "typescript": "~5.8.0"
   },
   "dependencies": {
     "socket.io-client": "^4.8.3",

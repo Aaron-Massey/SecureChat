@@ -108,6 +108,6 @@ export class LayoutStrategyResolver {
   };
 
   static getStrategy(type: string): LayoutStrategy {
-    return this.strategies[type] || this.strategies.auto;
+    return this.strategies[type] ?? this.strategies['auto']!;
   }
 }

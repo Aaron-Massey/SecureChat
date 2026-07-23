@@ -6,7 +6,7 @@
 
 export interface HostMessage {
   type: string;
-  payload?: any;
+  payload?: Record<string, unknown> | unknown;
 }
 
 export interface AppStatusPayload {
@@ -50,7 +50,7 @@ export class EmbeddedWindowAdapter {
     this.onMessageCallbacks.forEach(cb => cb(msg));
   }
 
-  public emitToHost(type: string, payload?: any) {
+  public emitToHost(type: string, payload?: Record<string, unknown> | unknown) {
     const message = { type: `SECURECHAT_EVENT_${type}`, payload, timestamp: Date.now() };
     if (window.parent && window.parent !== window) {
       window.parent.postMessage(message, '*');

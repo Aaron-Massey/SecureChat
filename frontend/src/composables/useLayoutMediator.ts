@@ -4,7 +4,7 @@
  * layout strategy, and embedded window events.
  */
 
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import {
   LayoutStrategyResolver,
   type LayoutStrategy,
@@ -97,12 +97,13 @@ export function useLayoutMediator() {
 
     // Subscribe to embedded window host messages
     windowAdapter.subscribe((msg) => {
-      if (msg.type === 'SECURECHAT_SET_TAB' && msg.payload?.tab) {
-        setActiveTab(msg.payload.tab as TabType);
+      const payload = msg.payload as Record<string, unknown> | undefined;
+      if (msg.type === 'SECURECHAT_SET_TAB' && typeof payload?.tab === 'string') {
+        setActiveTab(payload.tab as TabType);
       } else if (msg.type === 'SECURECHAT_TOGGLE_SETTINGS') {
         toggleSettings();
-      } else if (msg.type === 'SECURECHAT_SET_STRATEGY' && msg.payload?.strategy) {
-        setStrategy(msg.payload.strategy);
+      } else if (msg.type === 'SECURECHAT_SET_STRATEGY' && typeof payload?.strategy === 'string') {
+        setStrategy(payload.strategy);
       }
     });
   });

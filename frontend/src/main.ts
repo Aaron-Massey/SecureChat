@@ -24,8 +24,11 @@ app.use(router)
 app.use(PrimeVue)
 
 app.component('InputText', InputText)
+// eslint-disable-next-line vue/multi-word-component-names
 app.component('Button', Button)
+// eslint-disable-next-line vue/multi-word-component-names
 app.component('Checkbox', Checkbox)
+// eslint-disable-next-line vue/multi-word-component-names
 app.component('Dropdown', Dropdown)
 
 app.mount('#app')

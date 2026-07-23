@@ -1,4 +1,4 @@
-import type { SecurePayload, FileMetadata, ChunkMetadata } from '@shared/types/payload';
+import type { SecurePayload, FileMetadata, FileChunkMetadata } from '@shared/types/payload';
 
 /**
  * Factory Method / Abstract Factory Pattern: PayloadFactory
@@ -56,7 +56,7 @@ export class PayloadFactory {
    */
   public static createFileChunkPayload(
     senderDisplayName: string,
-    chunkMetadata: ChunkMetadata,
+    chunkMetadata: FileChunkMetadata,
     encryptedChunkPayload?: SecurePayload,
     base64PlaintextChunk?: string,
     timestamp: string = new Date().toLocaleTimeString()

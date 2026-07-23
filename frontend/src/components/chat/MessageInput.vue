@@ -55,7 +55,7 @@ const emit = defineEmits<{
 
 const textInput = ref('');
 const fileError = ref<string | null>(null);
-const messageInputRef = ref<any>(null);
+const messageInputRef = ref<{ $el?: HTMLInputElement; focus?: () => void } | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 let toastTimeout: ReturnType<typeof setTimeout> | null = null;
