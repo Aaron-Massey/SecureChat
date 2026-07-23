@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ConfigurableIceStrategy, DefaultIceStrategy, IceStrategyResolver } from '../iceServerStrategy';
 
-describe('IceServerStrategy (GOF Strategy Pattern)', () => {
+describe('IceServerStrategy', () => {
   it('DefaultIceStrategy returns fallback public STUN/TURN servers', () => {
     const strategy = new DefaultIceStrategy();
     const servers = strategy.getIceServers();

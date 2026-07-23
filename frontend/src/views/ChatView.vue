@@ -7,98 +7,96 @@
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
-    <!-- Full-Window Drag & Drop Upload Overlay -->
     <transition name="drawer-fade">
-      <div v-if="isDraggingFile" class="drag-drop-overlay glass-panel">
-        <div class="drag-drop-card animate-fade-in">
-          <i class="pi pi-cloud-upload drag-drop-icon"></i>
-          <h2>Drop File to Attach & Encrypt</h2>
-          <p>End-to-End P2P File Transfer (Max 25 MB)</p>
+      <div v-if="isDraggingFile" class="drag-drop-overlay panel">
+        <div class="drag-drop-card fade-in">
+          <UploadCloud class="drag-drop-icon" :size="48" />
+          <h2>Drop file to send</h2>
+          <p>Peer-to-peer transfer (max 25 MB)</p>
         </div>
       </div>
     </transition>
 
-    <!-- Cyber Top Header Navigation Bar -->
-    <header class="app-header glass-panel">
-      <div class="brand-section">
-        <div class="brand-logo">
-          <i class="pi pi-shield brand-icon"></i>
+    <header class="app-header panel">
+      <div class="brand">
+        <div class="brand-icon">
+          <Shield :size="20" />
         </div>
         <div class="brand-titles">
-          <h1 class="brand-name">SecureChat P2P</h1>
-          <span class="brand-badge">AES/DES WEBRTC</span>
+          <h1 class="brand-title">SecureChat P2P</h1>
+          <span class="brand-sub">WebRTC</span>
         </div>
       </div>
 
-      <!-- Mode & Status Quick Pills -->
       <div class="header-status-pills" v-if="!shouldUseDrawerSettings">
-        <div class="status-pill" :class="crypto.isEncrypted ? 'encrypted-pill' : 'plaintext-pill'">
-          <i class="pi" :class="crypto.isEncrypted ? 'pi-lock' : 'pi-lock-open'"></i>
+        <div class="badge" :class="crypto.isEncrypted ? 'badge-encrypted' : 'badge-plain'">
+          <Lock v-if="crypto.isEncrypted" :size="14" :class="{ 'bounce-lock': isLockBouncing }" />
+          <Unlock v-else :size="14" :class="{ 'unlock-shake': isUnlockShaking }" />
           <span>{{ crypto.isEncrypted ? `${crypto.activeBitLength === 128 ? 'AES-128' : 'DES-56'}` : 'PLAINTEXT' }}</span>
         </div>
       </div>
 
-      <!-- Header Action Controls -->
       <div class="header-controls">
-        <!-- Dark / Light Theme Toggle Button -->
-        <button
-          class="layout-btn theme-btn"
-          :title="currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        <Button
+          class="btn-layout btn-theme"
+          v-tooltip.top="currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           @click="toggleTheme"
         >
-          <i class="pi" :class="currentTheme === 'dark' ? 'pi-sun' : 'pi-moon'"></i>
-        </button>
+          <transition name="sun-moon" mode="out-in">
+            <Sun v-if="currentTheme === 'dark'" key="sun" :size="16" />
+            <Moon v-else key="moon" :size="16" />
+          </transition>
+        </Button>
 
-        <!-- Layout Mode Switcher -->
         <div class="layout-switcher">
-          <button
-            class="layout-btn"
+          <div class="switcher-indicator" :style="indicatorStyle"></div>
+          <Button
+            class="btn-layout"
             :class="{ active: strategyType === 'auto' }"
-            title="Auto Adapt Layout"
+            v-tooltip.top="'Auto Adapt Layout'"
             @click="setStrategy('auto')"
           >
-            <i class="pi pi-desktop"></i>
-          </button>
-          <button
-            class="layout-btn"
+            <Bolt :size="16" />
+          </Button>
+          <Button
+            class="btn-layout"
             :class="{ active: strategyType === 'split' }"
-            title="Dual-Pane Split"
+            v-tooltip.top="'Dual-Pane Split'"
             @click="setStrategy('split')"
           >
-            <i class="pi pi-th-large"></i>
-          </button>
-          <button
-            class="layout-btn"
+            <Columns2 :size="16" />
+          </Button>
+          <Button
+            class="btn-layout"
             :class="{ active: strategyType === 'tabbed' }"
-            title="Tabbed Single-Pane"
+            v-tooltip.top="'Tabbed Single-Pane'"
             @click="setStrategy('tabbed')"
           >
-            <i class="pi pi-window-maximize"></i>
-          </button>
+            <Smartphone :size="16" />
+          </Button>
         </div>
 
-        <!-- Mobile / Mini-Window Settings Drawer Toggle Button -->
-        <button
+        <Button
           v-if="shouldUseDrawerSettings"
           class="settings-toggle-btn"
           :class="{ active: isSettingsOpen }"
-          title="Security & Key Setup"
+          v-tooltip.top="'Security Setup'"
           @click="toggleSettings"
         >
-          <i class="pi pi-cog"></i>
-        </button>
+          <Settings :size="16" />
+        </Button>
       </div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="app-body">
-      <!-- Embedded Settings Popover Drawer (Mobile / Mini Window) -->
       <transition name="drawer-fade">
         <div v-if="shouldUseDrawerSettings && isSettingsOpen" class="settings-drawer-overlay" @click.self="closeSettings">
-          <div class="settings-drawer glass-panel animate-fade-in">
+          <div class="settings-drawer panel fade-in">
             <div class="drawer-header">
-              <h3><i class="pi pi-sliders-h"></i> Security Key Setup</h3>
-              <button class="close-drawer-btn" @click="closeSettings">✕</button>
+              <h3><Sliders :size="16" /> Security Setup</h3>
+              <Button class="close-drawer-btn" v-tooltip.top="'Close Setup'" @click="closeSettings">
+                <X :size="16" />
+              </Button>
             </div>
 
             <SetupBar
@@ -106,27 +104,25 @@
               v-model:passwordInput="passwordInput"
               v-model:activeBitLength="crypto.activeBitLength"
               :compact="true"
-              @setupFinalized="onSetupFinalized"
-              @inputStarted="setupStarted = true"
+              @setupFinalized="onSetupDone"
+              @inputStarted="isSetup = true"
             />
           </div>
         </div>
       </transition>
 
-      <!-- Desktop Setup Bar (Inline View) -->
       <div v-if="!shouldUseDrawerSettings" class="desktop-setup-wrapper">
         <SetupBar
           v-model:displayName="displayName"
           v-model:passwordInput="passwordInput"
           v-model:activeBitLength="crypto.activeBitLength"
-          @setupFinalized="finalizeKeySetup"
-          @inputStarted="setupStarted = true"
+          @setupFinalized="saveKeys"
+          @inputStarted="isSetup = true"
         />
       </div>
 
-      <!-- Side-by-Side Dual Pane Mode (Desktop) -->
       <div v-if="showSideBySide" class="dual-pane-container">
-        <div class="chat-pane glass-panel">
+        <div class="chat-pane panel">
           <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" />
           <MessageFeed
             :chatHistory="chatHistory"
@@ -140,10 +136,8 @@
         </div>
       </div>
 
-      <!-- Single Pane / Tabbed Mode (Mobile & Mini Windows) -->
       <div v-else class="tabbed-container">
-        <!-- Chat Tab Content -->
-        <div v-show="activeTab === 'chat'" class="chat-pane glass-panel">
+        <div v-show="activeTab === 'chat'" class="chat-pane panel">
           <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" />
           <MessageFeed
             :chatHistory="chatHistory"
@@ -152,21 +146,20 @@
           <MessageInput @send="sendMessage" @sendFile="handleSendFile" />
         </div>
 
-        <!-- Terminal Tab Content -->
         <div v-show="activeTab === 'terminal'" class="terminal-pane">
           <CipherTerminal :debugHistory="debugHistory" />
         </div>
       </div>
     </main>
 
-    <!-- Mobile / Compact View Bottom Tab Navigation Bar -->
+    <!-- Mobile Navigation Bar -->
     <nav v-if="showTabNavigation" class="bottom-nav glass-panel">
       <button
         class="nav-tab"
         :class="{ active: activeTab === 'chat' }"
         @click="setActiveTab('chat')"
       >
-        <i class="pi pi-comments"></i>
+        <MessageSquare :size="18" />
         <span>Chat</span>
       </button>
 
@@ -176,7 +169,7 @@
         @click="setActiveTab('terminal')"
       >
         <div class="tab-icon-wrapper">
-          <i class="pi pi-terminal"></i>
+          <Terminal :size="18" />
           <span v-if="unreadTerminalLogs > 0" class="unread-badge">{{ unreadTerminalLogs }}</span>
         </div>
         <span>Terminal</span>
@@ -187,7 +180,7 @@
         :class="{ active: isSettingsOpen }"
         @click="toggleSettings"
       >
-        <i class="pi pi-shield"></i>
+        <Shield :size="18" />
         <span>Keys</span>
       </button>
     </nav>
@@ -195,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed, onUnmounted } from 'vue';
 import { useCryptoStore } from '@/stores/crypto';
 import { useP2P } from '@/composables/useP2P';
 import { useLayoutMediator } from '@/composables/useLayoutMediator';
@@ -205,6 +198,22 @@ import ModeBanner from '@/components/chat/ModeBanner.vue';
 import MessageFeed from '@/components/chat/MessageFeed.vue';
 import MessageInput from '@/components/chat/MessageInput.vue';
 import CipherTerminal from '@/components/chat/CipherTerminal.vue';
+import {
+  UploadCloud,
+  Shield,
+  Lock,
+  Unlock,
+  Sun,
+  Moon,
+  Settings,
+  Sliders,
+  X,
+  MessageSquare,
+  Terminal,
+  Bolt,
+  Columns2,
+  Smartphone,
+} from '@lucide/vue';
 
 const crypto = useCryptoStore();
 const { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus } = useP2P();
@@ -227,12 +236,51 @@ const {
   windowAdapter,
 } = useLayoutMediator();
 
+const indicatorStyle = computed(() => {
+  let offsetIndex = 0;
+  if (strategyType.value === 'split') offsetIndex = 1;
+  else if (strategyType.value === 'tabbed') offsetIndex = 2;
+  return {
+    transform: `translateX(${offsetIndex * 1.875}rem)`
+  };
+});
+
+const isLockBouncing = ref(false);
+const isUnlockShaking = ref(false);
+let lockTimer: ReturnType<typeof setTimeout> | null = null;
+let unlockTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(
+  () => crypto.isEncrypted,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      if (lockTimer) clearTimeout(lockTimer);
+      isLockBouncing.value = true;
+      lockTimer = setTimeout(() => {
+        isLockBouncing.value = false;
+        lockTimer = null;
+      }, 650);
+    } else if (!newVal && oldVal) {
+      if (unlockTimer) clearTimeout(unlockTimer);
+      isUnlockShaking.value = true;
+      unlockTimer = setTimeout(() => {
+        isUnlockShaking.value = false;
+        unlockTimer = null;
+      }, 650);
+    }
+  }
+);
+
+onUnmounted(() => {
+  if (lockTimer) clearTimeout(lockTimer);
+  if (unlockTimer) clearTimeout(unlockTimer);
+});
+
 const passwordInput = ref('');
 const displayName = ref('');
 const showUndecrypted = ref(true);
-const setupStarted = ref(false);
+const isSetup = ref(false);
 
-/* Drag and Drop File Upload Overlay Handling */
 const isDraggingFile = ref(false);
 let dragCounter = 0;
 
@@ -275,18 +323,18 @@ const handleDrop = (e: DragEvent) => {
 };
 
 const sendMessage = (text: string) => {
-  if (!text || (!setupStarted.value && !crypto.isReady)) return;
+  if (!text || (!isSetup.value && !crypto.isReady)) return;
   const nameToUse = displayName.value.trim() || 'Anonymous';
   sendP2PMessage(text, nameToUse);
 };
 
 const handleSendFile = (file: File) => {
-  if (!file || (!setupStarted.value && !crypto.isReady)) return;
+  if (!file || (!isSetup.value && !crypto.isReady)) return;
   const nameToUse = displayName.value.trim() || 'Anonymous';
   sendP2PFile(file, nameToUse);
 };
 
-const finalizeKeySetup = () => {
+const saveKeys = () => {
   try {
     crypto.setupKeys(passwordInput.value);
   } catch (error) {
@@ -294,8 +342,8 @@ const finalizeKeySetup = () => {
   }
 };
 
-const onSetupFinalized = () => {
-  finalizeKeySetup();
+const onSetupDone = () => {
+  saveKeys();
   closeSettings();
 };
 
@@ -333,7 +381,7 @@ watch(
   right: 0;
   bottom: 0;
   z-index: 50;
-  background: rgba(8, 12, 20, 0.85);
+  background: var(--bg-overlay);
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
@@ -385,26 +433,22 @@ watch(
   flex-shrink: 0;
 }
 
-.brand-section {
+.brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.brand-logo {
+.brand-icon {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  background: var(--accent-cyan);
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-glow-cyan);
-}
-
-.brand-icon {
-  font-size: 1.2rem;
-  color: #000000;
 }
 
 .brand-titles {
@@ -412,7 +456,7 @@ watch(
   flex-direction: column;
 }
 
-.brand-name {
+.brand-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -421,7 +465,7 @@ watch(
   line-height: 1.2;
 }
 
-.brand-badge {
+.brand-sub {
   font-size: 0.65rem;
   font-weight: 600;
   color: var(--accent-cyan);
@@ -435,7 +479,7 @@ watch(
   gap: 0.5rem;
 }
 
-.status-pill {
+.badge {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
@@ -446,16 +490,16 @@ watch(
   font-family: var(--font-mono);
 }
 
-.encrypted-pill {
-  background: rgba(0, 242, 254, 0.15);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(0, 242, 254, 0.3);
+.badge-encrypted {
+  background: var(--pill-encrypted-bg);
+  color: var(--pill-encrypted-text);
+  border: 1px solid var(--pill-encrypted-border);
 }
 
-.plaintext-pill {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+.badge-plain {
+  background: var(--pill-plaintext-bg);
+  color: var(--pill-plaintext-text);
+  border: 1px solid var(--pill-plaintext-border);
 }
 
 .header-controls {
@@ -466,47 +510,100 @@ watch(
 
 .layout-switcher {
   display: flex;
+  position: relative;
   background: var(--bg-glass-input);
   padding: 0.15rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
 }
 
-.layout-btn {
-  background: transparent;
+.switcher-indicator {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1.875rem;
+  height: 1.875rem;
+  background: var(--accent-cyan);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-glow-cyan);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.btn-layout {
+  position: relative;
+  z-index: 2;
+  background: transparent !important;
   border: none;
   color: var(--text-muted);
   width: 1.875rem;
   height: 1.875rem;
+  padding: 0 !important;
   border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition-fast);
+  transition: color 0.2s ease, transform 0.08s ease-in-out;
 }
 
-.layout-btn:hover {
+.btn-layout:active, .settings-toggle-btn:active {
+  transform: scale(0.92);
+  transition: transform 0.08s ease-in-out;
+}
+
+.btn-layout:hover {
   color: var(--text-primary);
 }
 
-.layout-btn.active {
-  background: var(--accent-cyan);
-  color: #000000;
+.btn-layout.active {
+  color: var(--text-inverse) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-.theme-btn {
+.btn-theme {
   border: 1px solid var(--border-subtle);
   background: var(--bg-glass-input);
+  overflow: hidden;
+  position: relative;
 }
 
-.theme-btn:hover {
+.btn-theme:hover {
   color: var(--accent-cyan);
   border-color: var(--accent-cyan-glow);
 }
 
+.sun-moon-leave-active {
+  transition: transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease-in;
+}
+
+.sun-moon-enter-active {
+  transition: transform 0.25s cubic-bezier(0, 0, 0.2, 1), opacity 0.2s ease-out;
+}
+
+.sun-moon-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.sun-moon-leave-to {
+  transform: translateY(26px) !important;
+  opacity: 0;
+}
+
+.sun-moon-enter-from {
+  transform: translateY(26px) !important;
+  opacity: 0;
+}
+
+.sun-moon-enter-to {
+  transform: translateY(0) !important;
+  opacity: 1;
+}
+
 .settings-toggle-btn {
-  background: rgba(30, 41, 59, 0.8);
+  background: var(--bg-glass-input);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
   width: 2.125rem;
@@ -579,7 +676,7 @@ watch(
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(4, 7, 13, 0.75);
+  background: var(--bg-modal-backdrop);
   backdrop-filter: blur(8px);
   z-index: 20;
   display: flex;
@@ -673,7 +770,7 @@ watch(
   top: -6px;
   right: -10px;
   background: var(--accent-rose);
-  color: #ffffff;
+  color: var(--text-inverse);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 0.1rem 0.35rem;

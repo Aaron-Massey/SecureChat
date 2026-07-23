@@ -4,6 +4,9 @@ export interface IceServerConfig {
   turnPassword?: string;
 }
 
+/**
+ * Strategy Pattern: IceServerStrategy
+ */
 export interface IceServerStrategy {
   getIceServers(): RTCIceServer[];
 }

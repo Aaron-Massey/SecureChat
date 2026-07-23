@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EmbeddedWindowAdapter, type HostMessage } from '../embeddedWindowAdapter';
 
-describe('EmbeddedWindowAdapter (GOF Adapter Pattern)', () => {
+describe('EmbeddedWindowAdapter', () => {
   it('instantiates EmbeddedWindowAdapter and checks embedded status', () => {
     const adapter = new EmbeddedWindowAdapter();
     expect(typeof adapter.checkIsEmbedded()).toBe('boolean');

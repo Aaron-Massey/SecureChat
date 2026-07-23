@@ -1,7 +1,6 @@
 /**
- * GOF Adapter Pattern: Embedded Window Adapter
- * Adapts host window messages (postMessage) and container signals between parent portfolio desktop windows
- * and the SecureChat application state.
+ * Adapter Pattern: EmbeddedWindowAdapter
+ * Handles message events with host windows and parent frames.
  */
 
 export interface HostMessage {

@@ -1,6 +1,6 @@
 /**
- * GOF Strategy Pattern: Layout Strategy
- * Encapsulates responsive container layout strategies for Desktop, Mobile, and Mini-Window (Embedded Portfolio) views.
+ * Strategy Pattern: LayoutStrategy
+ * Responsive layout strategies for desktop, mobile, and embedded views.
  */
 
 export type LayoutMode = 'split' | 'tabbed' | 'compact';

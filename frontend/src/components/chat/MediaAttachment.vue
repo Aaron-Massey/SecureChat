@@ -1,9 +1,8 @@
 <template>
   <div class="media-attachment-card">
-    <!-- Active File Transfer Progress -->
     <div v-if="isTransferring" class="transfer-progress">
       <div class="transfer-header">
-        <i class="pi pi-download transfer-icon"></i>
+        <Download class="transfer-icon" :size="16" />
         <span class="file-name" :title="fileName">{{ fileName }}</span>
         <span class="file-size">({{ formattedSize }})</span>
       </div>
@@ -13,11 +12,8 @@
       <span class="progress-percentage">Receiving {{ progress }}%</span>
     </div>
 
-    <!-- Completed Transfer Display -->
     <template v-else>
-      <!-- Image / Video Click-to-View Media -->
       <div v-if="isMedia" class="media-preview-wrapper">
-        <!-- Unrevealed State (Click to View Overlay) -->
         <div v-if="!isRevealed" class="media-overlay">
           <div class="media-meta">
             <span class="media-type-badge">{{ isImage ? 'IMAGE' : 'VIDEO' }}</span>
@@ -25,20 +21,19 @@
             <span class="media-file-size">({{ formattedSize }})</span>
           </div>
           <button @click="toggleReveal" class="reveal-button">
-            <i class="pi pi-eye"></i> Preview {{ isImage ? 'Image' : 'Video' }}
+            <Eye :size="14" /> Preview {{ isImage ? 'Image' : 'Video' }}
           </button>
         </div>
 
-        <!-- Revealed State -->
         <div v-else class="revealed-media-container">
           <div class="media-toolbar">
             <span class="media-file-name">{{ fileName }}</span>
             <div class="toolbar-actions">
               <a :href="mediaUrl" :download="fileName" class="download-link" title="Download File">
-                <i class="pi pi-download"></i> Save
+                <Download :size="14" /> Save
               </a>
               <button @click="toggleReveal" class="hide-button" title="Hide Media">
-                <i class="pi pi-eye-slash"></i> Hide
+                <EyeOff :size="14" /> Hide
               </button>
             </div>
           </div>
@@ -53,17 +48,16 @@
         </div>
       </div>
 
-      <!-- Generic Non-Media File Download Card -->
       <div v-else class="generic-file-card">
         <div class="file-details">
-          <i class="pi pi-file file-type-icon"></i>
+          <FileText class="file-type-icon" :size="20" />
           <div class="file-info">
             <span class="file-title" :title="fileName">{{ fileName }}</span>
             <span class="file-meta">{{ formattedSize }} • {{ mimeType || 'Unknown format' }}</span>
           </div>
         </div>
         <a :href="mediaUrl" :download="fileName" class="download-button">
-          <i class="pi pi-download"></i> Download
+          <Download :size="14" /> Download
         </a>
       </div>
     </template>
@@ -72,6 +66,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
+import { Download, Eye, EyeOff, FileText } from '@lucide/vue';
 import { formatFileSize, revokeObjectUrl } from '@/utils/fileChunker';
 
 const props = withDefaults(
@@ -115,7 +110,7 @@ onUnmounted(() => {
 <style scoped>
 .media-attachment-card {
   margin-top: 0.5rem;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-dark-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.625rem 0.75rem;
@@ -176,7 +171,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 1rem 0.75rem;
-  background: rgba(30, 41, 59, 0.5);
+  background: var(--bg-glass-input);
   border: 1px dashed var(--border-subtle);
   border-radius: var(--radius-md);
   gap: 0.625rem;
@@ -191,9 +186,9 @@ onUnmounted(() => {
 }
 
 .media-type-badge {
-  background: rgba(0, 242, 254, 0.15);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(0, 242, 254, 0.3);
+  background: var(--pill-encrypted-bg);
+  color: var(--pill-encrypted-text);
+  border: 1px solid var(--pill-encrypted-border);
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-xs);
   font-size: 0.7rem;
@@ -204,7 +199,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(16, 185, 129, 0.2));
+  background: var(--btn-secondary-bg);
   color: var(--text-primary);
   border: 1px solid var(--accent-cyan);
   padding: 0.4rem 0.875rem;
@@ -216,7 +211,7 @@ onUnmounted(() => {
 }
 
 .reveal-button:hover {
-  background: linear-gradient(135deg, rgba(0, 242, 254, 0.4), rgba(16, 185, 129, 0.4));
+  background: var(--btn-secondary-hover-bg);
   box-shadow: var(--shadow-glow-cyan);
 }
 
@@ -316,9 +311,9 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  background: rgba(0, 242, 254, 0.1);
+  background: var(--pill-encrypted-bg);
   color: var(--accent-cyan);
-  border: 1px solid rgba(0, 242, 254, 0.3);
+  border: 1px solid var(--pill-encrypted-border);
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-md);
   text-decoration: none;
@@ -329,14 +324,14 @@ onUnmounted(() => {
 
 .download-button:hover {
   background: var(--accent-cyan);
-  color: var(--bg-dark-root);
+  color: var(--text-inverse);
   box-shadow: var(--shadow-glow-cyan);
 }
 
 .media-error-box {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fda4af;
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border: 1px solid var(--alert-danger-border);
   border-radius: var(--radius-md);
   padding: 0.625rem;
   font-size: 0.85rem;

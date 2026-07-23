@@ -1,9 +1,8 @@
 <template>
   <div class="banner-wrapper">
-    <!-- Network Status Alert -->
     <div v-if="connectionStatus === 'reconnecting'" class="mode-banner reconnecting-mode" role="status" aria-live="polite">
       <div class="banner-header">
-        <span class="status-dot warning-pulse"></span>
+        <RefreshCw class="banner-icon" :size="16" />
         <strong>Signaling Reconnecting...</strong>
       </div>
       <span class="banner-subtext">Connection interrupted. Re-establishing connection...</span>
@@ -11,32 +10,32 @@
 
     <div v-else-if="connectionStatus === 'disconnected'" class="mode-banner disconnected-mode" role="status" aria-live="polite">
       <div class="banner-header">
-        <span class="status-dot error-pulse"></span>
+        <AlertTriangle class="banner-icon" :size="16" />
         <strong>Network Disconnected</strong>
       </div>
       <span class="banner-subtext">Signaling server unreachable. Retrying automatically...</span>
     </div>
 
-    <!-- Encryption Mode Status Bar -->
     <div v-if="!isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite">
       <div class="banner-header">
-        <i class="pi pi-lock-open banner-icon"></i>
+        <ShieldAlert class="banner-icon" :size="16" />
         <strong>Plaintext Mode Active</strong>
       </div>
-      <span class="banner-subtext">Messages sent unencrypted across P2P channel. Enter passphrase to secure connection.</span>
+      <span class="banner-subtext">Messages sent unencrypted. Enter a passphrase to encrypt.</span>
     </div>
 
     <div v-else class="mode-banner encrypted-mode" role="status" aria-live="polite">
       <div class="banner-header">
-        <i class="pi pi-shield banner-icon"></i>
+        <Shield class="banner-icon" :size="16" />
         <strong>End-to-End Encryption Enabled</strong>
       </div>
-      <span class="banner-subtext">Messages and media attachments are cryptographically protected.</span>
+      <span class="banner-subtext">Messages and file transfers are encrypted.</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { RefreshCw, AlertTriangle, ShieldAlert, Shield } from '@lucide/vue';
 import type { ConnectionStatus } from '@/services/p2pManager';
 
 defineProps<{
@@ -86,47 +85,30 @@ defineProps<{
   opacity: 0.85;
 }
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
 
-.warning-pulse {
-  background: var(--accent-amber);
-  animation: status-pulse 1.2s infinite ease-in-out;
-  box-shadow: 0 0 8px var(--accent-amber);
-}
-
-.error-pulse {
-  background: var(--accent-rose);
-  animation: status-pulse 1.2s infinite ease-in-out;
-  box-shadow: 0 0 8px var(--accent-rose);
-}
 
 .plaintext-mode {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fcd34d;
-  border-color: rgba(245, 158, 11, 0.35);
+  background: var(--pill-plaintext-bg);
+  color: var(--pill-plaintext-text);
+  border-color: var(--pill-plaintext-border);
 }
 
 .encrypted-mode {
-  background: rgba(0, 242, 254, 0.1);
-  color: var(--accent-cyan);
-  border-color: rgba(0, 242, 254, 0.3);
+  background: var(--pill-encrypted-bg);
+  color: var(--pill-encrypted-text);
+  border-color: var(--pill-encrypted-border);
   box-shadow: var(--shadow-glow-cyan);
 }
 
 .reconnecting-mode {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border-color: rgba(245, 158, 11, 0.4);
+  background: var(--alert-warning-bg);
+  color: var(--alert-warning-text);
+  border-color: var(--alert-warning-border);
 }
 
 .disconnected-mode {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fda4af;
-  border-color: rgba(244, 63, 94, 0.4);
+  background: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border-color: var(--alert-danger-border);
 }
 </style>

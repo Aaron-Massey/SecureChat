@@ -3,7 +3,7 @@ import type { DerivedCryptoKeys } from '@/utils/crypto-keys';
 
 /**
  * Strategy Pattern: IKeyRatchetStrategy
- * Abstracts key rotation/ratcheting algorithms (Hash Ratchet vs. Static/Null Ratchet).
+ * Key ratcheting strategies (Hash vs Static).
  */
 export interface IKeyRatchetStrategy {
   readonly name: 'hash' | 'static';

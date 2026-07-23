@@ -1,7 +1,7 @@
 
 /**
  * Command Pattern: IChatCommand
- * Encapsulates chat transmission requests into executable command objects.
+ * Chat transmission commands.
  */
 export interface IChatCommand {
   id: string;

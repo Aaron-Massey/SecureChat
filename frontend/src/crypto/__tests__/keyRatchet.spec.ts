@@ -17,7 +17,7 @@ describe('Key Ratcheting & Version Sync', () => {
     setActivePinia(createPinia());
   });
 
-  describe('KeyRatchetStrategy (Strategy Pattern)', () => {
+  describe('KeyRatchetStrategy', () => {
     it('produces new distinct derived keys on each ratchet step in HashRatchetStrategy', () => {
       const initialKeys = deriveCryptoKeys('secret-pass', 'salt', 100);
       const strategy = KeyRatchetFactory.getStrategy('hash');
@@ -39,7 +39,7 @@ describe('Key Ratcheting & Version Sync', () => {
     });
   });
 
-  describe('KeyRatchetContext (State Pattern)', () => {
+  describe('KeyRatchetContext', () => {
     it('tracks version numbers and supports multi-step synchronization', () => {
       const initialKeys = deriveCryptoKeys('secret-pass', 'salt', 100);
       const context = new KeyRatchetContext(initialKeys, 1, 'hash');

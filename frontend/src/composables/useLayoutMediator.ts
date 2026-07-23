@@ -1,7 +1,6 @@
 /**
- * GOF Mediator Pattern: Layout Mediator Composable
- * Centralizes state coordination between top navbar, tab controls, drawer settings, container dimensions,
- * layout strategy, and embedded window events.
+ * Mediator Pattern: useLayoutMediator
+ * Manages responsive layout state and window event listeners.
  */
 
 import { ref, computed, onMounted, onUnmounted } from 'vue';
@@ -43,7 +42,7 @@ export function useLayoutMediator() {
     return currentStrategy.value.shouldShowTabNavigation(layoutMode.value);
   });
 
-  const shouldUseDrawerSettings = computed<boolean>(() => {
+  const isDrawerSettings = computed<boolean>(() => {
     return currentStrategy.value.shouldUseDrawerSettings(layoutMode.value);
   });
 
@@ -127,7 +126,8 @@ export function useLayoutMediator() {
     layoutMode,
     showSideBySide,
     showTabNavigation,
-    shouldUseDrawerSettings,
+    shouldUseDrawerSettings: isDrawerSettings,
+    isDrawerSettings,
     setStrategy,
     setActiveTab,
     toggleSettings,

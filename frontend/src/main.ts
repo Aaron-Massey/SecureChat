@@ -8,6 +8,7 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import Dropdown from 'primevue/dropdown'
+import Tooltip from 'primevue/tooltip'
 
 import 'primevue/resources/themes/saga-blue/theme.css'
 import 'primevue/resources/primevue.min.css'
@@ -22,6 +23,7 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(PrimeVue)
+app.directive('tooltip', Tooltip)
 
 app.component('InputText', InputText)
 // eslint-disable-next-line vue/multi-word-component-names

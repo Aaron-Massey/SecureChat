@@ -18,56 +18,54 @@ export function configureSockets(server: HttpServer): Server {
 
   io.on('connection', (socket: Socket) => {
     const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-    console.log(`[SOCKET CONNECT] Client ${socket.id} connected from IP: ${clientIp}`);
+    console.log(`Client ${socket.id} connected from ${clientIp}`);
     socket.join(ROOM_NAME);
 
     const roomClients = Array.from(io.sockets.adapter.rooms.get(ROOM_NAME) || []);
-    console.log(`[ROOM STATUS] Active room clients (${roomClients.length}): [${roomClients.join(', ')}]`);
+    console.log(`Active room clients (${roomClients.length}): [${roomClients.join(', ')}]`);
 
     if (roomClients.length === 1) {
-      console.log('[REKEY TIMER] First client connected, starting rekey timer.');
+      console.log('First client connected, starting rekey timer.');
       rekeyService.start(io, ROOM_NAME);
     }
 
     const otherClients = roomClients.filter(id => id !== socket.id);
-    console.log(`[SIGNALING] Emitting 'other-clients' to ${socket.id}: [${otherClients.join(', ')}]`);
     socket.emit('other-clients', otherClients);
 
-    console.log(`[SIGNALING] Broadcasting 'new-client' event for ${socket.id} to room`);
     socket.to(ROOM_NAME).emit('new-client', socket.id);
 
     socket.on('webrtc-offer', ({ recipientId, payload }) => {
-      console.log(`[WEBRTC OFFER] ${socket.id} ---> ${recipientId} (type: ${payload?.type})`);
+      console.log(`Relaying WebRTC offer from ${socket.id} to ${recipientId}`);
       socket.to(recipientId).emit('webrtc-offer', { senderId: socket.id, payload });
     });
 
     socket.on('webrtc-answer', ({ recipientId, payload }) => {
-      console.log(`[WEBRTC ANSWER] ${socket.id} ---> ${recipientId} (type: ${payload?.type})`);
+      console.log(`Relaying WebRTC answer from ${socket.id} to ${recipientId}`);
       socket.to(recipientId).emit('webrtc-answer', { senderId: socket.id, payload });
     });
 
     socket.on('new-ice-candidate', ({ recipientId, payload }) => {
       const candidateStr = payload?.candidate || '';
       const candidateType = candidateStr.includes('typ host')
-        ? 'HOST (LAN)'
+        ? 'HOST'
         : candidateStr.includes('typ srflx')
-        ? 'STUN (Public IP)'
+        ? 'STUN'
         : candidateStr.includes('typ relay')
-        ? 'TURN (Relay)'
+        ? 'TURN'
         : 'UNKNOWN';
-      console.log(`[ICE CANDIDATE] ${socket.id} ---> ${recipientId} [Candidate Type: ${candidateType}]`);
+      console.log(`Relaying ICE candidate (${candidateType}) from ${socket.id} to ${recipientId}`);
       socket.to(recipientId).emit('new-ice-candidate', { senderId: socket.id, payload });
     });
 
     socket.on('disconnect', (reason) => {
-      console.log(`[SOCKET DISCONNECT] Client ${socket.id} disconnected (reason: ${reason})`);
+      console.log(`Client ${socket.id} disconnected (${reason})`);
       socket.to(ROOM_NAME).emit('client-disconnected', socket.id);
 
       const remainingClients = Array.from(io.sockets.adapter.rooms.get(ROOM_NAME) || []);
-      console.log(`[ROOM STATUS] Remaining clients (${remainingClients.length}): [${remainingClients.join(', ')}]`);
+      console.log(`Remaining room clients (${remainingClients.length}): [${remainingClients.join(', ')}]`);
 
       if (remainingClients.length === 0) {
-        console.log('[REKEY TIMER] Last client disconnected, stopping rekey timer.');
+        console.log('Last client disconnected, stopping rekey timer.');
         rekeyService.stop();
       }
     });

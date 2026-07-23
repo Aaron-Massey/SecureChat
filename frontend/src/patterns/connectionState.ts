@@ -1,7 +1,7 @@
 import type { ConnectionStatus } from '@/services/p2pManager';
 
 /**
- * State Pattern: ConnectionState
+ * State Pattern: P2PConnectionState
  * Encapsulates state-specific logic for P2P Connection Status.
  */
 export abstract class P2PConnectionState {

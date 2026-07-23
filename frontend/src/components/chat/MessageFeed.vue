@@ -16,23 +16,27 @@
 
     <div class="message-feed" ref="feedRef">
       <div v-if="filteredChatHistory.length === 0" class="empty-feed">
-        <i class="pi pi-comments empty-icon"></i>
-        <span>No messages in connection feed yet.</span>
+        <MessageSquare class="empty-icon" :size="36" />
+        <span>No messages yet.</span>
       </div>
 
       <div
         v-for="(msg, index) in filteredChatHistory"
         :key="msg.id || index"
-        class="message-wrapper animate-fade-in"
-        :class="{ 'undecrypted': !msg.decrypted }"
+        class="message-wrapper fade-in"
+        :class="{ 'undecrypted': !msg.decrypted, 'system-wrapper': isSystemMessage(msg) }"
       >
-        <div class="avatar-icon">
-          {{ getAvatarInitial(msg.sender) }}
+        <div class="avatar-icon" :class="{ 'system-avatar': isSystemMessage(msg) }">
+          <ServerCog v-if="isSystemMessage(msg)" :size="16" />
+          <template v-else>{{ getAvatarInitial(msg.sender) }}</template>
         </div>
 
-        <div class="bubble-card">
+        <div class="bubble-card" :class="{ 'system-card': isSystemMessage(msg) }">
           <div class="bubble-header">
-            <span class="sender-name">{{ msg.sender }}</span>
+            <div class="sender-info">
+              <span class="sender-name">{{ msg.sender }}</span>
+              <span v-if="isSystemMessage(msg)" class="system-badge">SYSTEM</span>
+            </div>
             <span class="timestamp">{{ msg.timestamp }}</span>
           </div>
 
@@ -40,7 +44,6 @@
             {{ msg.text }}
           </div>
 
-          <!-- Render File / Media Attachment -->
           <MediaAttachment
             v-if="msg.fileAttachment && (msg.decrypted || msg.fileAttachment.isTransferring)"
             :file-name="msg.fileAttachment.fileName"
@@ -52,7 +55,7 @@
           />
 
           <div v-if="!msg.decrypted" class="undecrypted-badge">
-            <i class="pi pi-lock"></i> Undecryptable Payload
+            <Lock :size="14" /> Undecryptable Payload
           </div>
         </div>
       </div>
@@ -62,6 +65,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
+import { MessageSquare, Lock, ServerCog } from '@lucide/vue';
 import type { ChatMessage } from '@/composables/useP2P';
 import MediaAttachment from './MediaAttachment.vue';
 
@@ -82,6 +86,10 @@ const filteredChatHistory = computed(() => {
   }
   return props.chatHistory.filter((msg) => msg.decrypted);
 });
+
+const isSystemMessage = (msg: ChatMessage): boolean => {
+  return msg.isSystem === true;
+};
 
 const getAvatarInitial = (senderName: string): string => {
   if (!senderName) return 'A';
@@ -171,8 +179,8 @@ watch(
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(139, 92, 246, 0.2));
-  border: 1px solid var(--accent-cyan-glow);
+  background: var(--avatar-default-bg);
+  border: 1px solid var(--avatar-default-border);
   color: var(--accent-cyan);
   display: flex;
   align-items: center;
@@ -182,14 +190,25 @@ watch(
   flex-shrink: 0;
 }
 
+.system-avatar {
+  background: var(--system-avatar-bg);
+  border-color: var(--system-avatar-border);
+  color: var(--accent-purple);
+}
+
 .bubble-card {
   flex: 1;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid var(--border-subtle);
+  background: var(--bubble-bg);
+  border: 1px solid var(--bubble-border);
   border-radius: var(--radius-md);
   padding: 0.625rem 0.875rem;
   word-break: break-word;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-glass);
+}
+
+.system-card {
+  background: var(--card-system-bg);
+  border-color: var(--card-system-border);
 }
 
 .bubble-header {
@@ -199,10 +218,31 @@ watch(
   margin-bottom: 0.375rem;
 }
 
+.sender-info {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
 .sender-name {
   font-weight: 600;
   font-size: 0.85rem;
   color: var(--accent-cyan);
+}
+
+.system-card .sender-name {
+  color: var(--accent-purple);
+}
+
+.system-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  background: var(--badge-system-bg);
+  color: var(--badge-system-text);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.05em;
 }
 
 .timestamp {
@@ -217,18 +257,18 @@ watch(
 }
 
 .undecrypted .bubble-card {
-  background: rgba(244, 63, 94, 0.08);
-  border-color: rgba(244, 63, 94, 0.3);
+  background: var(--bubble-undecrypted-bg);
+  border-color: var(--bubble-undecrypted-border);
 }
 
 .undecrypted .sender-name {
-  color: #fda4af;
+  color: var(--bubble-undecrypted-text);
 }
 
 .undecrypted-badge {
   margin-top: 0.375rem;
   font-size: 0.75rem;
-  color: #fda4af;
+  color: var(--bubble-undecrypted-text);
   display: flex;
   align-items: center;
   gap: 0.25rem;

@@ -1,6 +1,5 @@
 <template>
-  <div class="debug-pane glass-panel">
-    <!-- Terminal Header Bar -->
+  <div class="debug-pane panel">
     <div class="terminal-header">
       <div class="window-controls">
         <span class="control-dot red"></span>
@@ -8,20 +7,19 @@
         <span class="control-dot green"></span>
       </div>
       <div class="terminal-title">
-        <i class="pi pi-terminal terminal-icon"></i>
-        <span>CRYPTOGRAPHIC PAYLOAD STREAM</span>
+        <Terminal class="terminal-icon" :size="14" />
+        <span>PAYLOAD LOG STREAM</span>
       </div>
       <div class="terminal-actions">
         <button class="action-btn" title="Clear Terminal Logs" @click="clearLogs">
-          <i class="pi pi-trash"></i>
+          <Trash2 :size="14" />
         </button>
       </div>
     </div>
 
-    <!-- Terminal Feed -->
     <div class="terminal-feed" ref="debugFeedRef">
       <div v-if="filteredDebugHistory.length === 0" class="empty-terminal">
-        <span class="blink-cursor">></span> Ready for incoming packet traffic...
+        <span class="blink-cursor">></span> Ready for traffic...
       </div>
 
       <div
@@ -41,7 +39,7 @@
           <div class="header-right">
             <span class="timestamp-tag">{{ payload.timestamp }}</span>
             <button class="copy-btn" title="Copy raw payload JSON" @click="copyPayload(payload)">
-              <i class="pi pi-copy"></i>
+              <Copy :size="14" />
             </button>
           </div>
         </div>
@@ -63,6 +61,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue';
+import { Terminal, Trash2, Copy } from '@lucide/vue';
 import type { SecurePayload } from '@shared/types/payload';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
@@ -117,7 +116,7 @@ watch(
   align-items: center;
   justify-content: space-between;
   padding: 0.625rem 0.875rem;
-  background: rgba(11, 15, 25, 0.9);
+  background: var(--terminal-header-bg);
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -133,9 +132,9 @@ watch(
   border-radius: 50%;
 }
 
-.control-dot.red { background: #ff5f56; }
-.control-dot.yellow { background: #ffbd2e; }
-.control-dot.green { background: #27c93f; }
+.control-dot.red { background: var(--accent-rose); }
+.control-dot.yellow { background: var(--accent-amber); }
+.control-dot.green { background: var(--accent-emerald); }
 
 .terminal-title {
   display: flex;
@@ -164,7 +163,7 @@ watch(
 
 .action-btn:hover {
   color: var(--accent-rose);
-  background: rgba(244, 63, 94, 0.1);
+  background: var(--alert-danger-bg);
 }
 
 .terminal-feed {
@@ -176,7 +175,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  background: var(--bg-dark-root);
+  background: var(--terminal-bg);
   min-height: 0;
 }
 
@@ -192,11 +191,11 @@ watch(
 }
 
 .payload-card {
-  background: rgba(15, 23, 42, 0.7);
+  background: var(--bg-glass-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.625rem 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-glass);
 }
 
 .encrypted-card {
@@ -213,7 +212,7 @@ watch(
   justify-content: space-between;
   margin-bottom: 0.5rem;
   padding-bottom: 0.375rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .meta-tags {
@@ -230,15 +229,15 @@ watch(
 }
 
 .cipher-badge.none {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: var(--pill-plaintext-bg);
+  color: var(--pill-plaintext-text);
+  border: 1px solid var(--pill-plaintext-border);
 }
 
 .cipher-badge.AES-128, .cipher-badge.DES-56 {
-  background: rgba(0, 242, 254, 0.2);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(0, 242, 254, 0.3);
+  background: var(--pill-encrypted-bg);
+  color: var(--pill-encrypted-text);
+  border: 1px solid var(--pill-encrypted-border);
 }
 
 .sender-tag {

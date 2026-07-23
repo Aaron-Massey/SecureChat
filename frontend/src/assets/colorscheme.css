@@ -77,6 +77,25 @@
   --bubble-undecrypted-border: rgba(var(--color-dracula-red-rgb), 0.4);
   --bubble-undecrypted-text: var(--color-dracula-pink);
 
+  --alert-danger-bg: rgba(var(--color-dracula-red-rgb), 0.15);
+  --alert-danger-border: rgba(var(--color-dracula-red-rgb), 0.4);
+  --alert-danger-text: var(--color-dracula-pink);
+
+  --alert-warning-bg: rgba(var(--color-dracula-orange-rgb), 0.15);
+  --alert-warning-border: rgba(var(--color-dracula-orange-rgb), 0.4);
+  --alert-warning-text: var(--color-dracula-yellow);
+
+  --badge-system-bg: rgba(var(--color-dracula-purple-rgb), 0.2);
+  --badge-system-text: var(--color-dracula-purple);
+  --system-avatar-bg: linear-gradient(135deg, rgba(var(--color-dracula-purple-rgb), 0.25), rgba(var(--color-dracula-cyan-rgb), 0.25));
+  --system-avatar-border: rgba(var(--color-dracula-purple-rgb), 0.4);
+
+  --avatar-default-bg: linear-gradient(135deg, rgba(var(--color-dracula-cyan-rgb), 0.2), rgba(var(--color-dracula-purple-rgb), 0.2));
+  --avatar-default-border: var(--accent-cyan-glow);
+
+  --card-system-bg: rgba(var(--color-dracula-purple-rgb), 0.08);
+  --card-system-border: rgba(var(--color-dracula-purple-rgb), 0.25);
+
   --pill-encrypted-bg: rgba(var(--color-dracula-cyan-rgb), 0.15);
   --pill-encrypted-border: rgba(var(--color-dracula-cyan-rgb), 0.35);
   --pill-encrypted-text: var(--color-dracula-cyan);
@@ -181,6 +200,25 @@
   --bubble-undecrypted-bg: var(--color-light-undecrypted-bg);
   --bubble-undecrypted-border: var(--color-light-undecrypted-border);
   --bubble-undecrypted-text: var(--color-light-rose);
+
+  --alert-danger-bg: #fff1f2;
+  --alert-danger-border: #fecdd3;
+  --alert-danger-text: #e11d48;
+
+  --alert-warning-bg: #fef3c7;
+  --alert-warning-border: #fcd34d;
+  --alert-warning-text: #b45309;
+
+  --badge-system-bg: #f3e8ff;
+  --badge-system-text: #6d28d9;
+  --system-avatar-bg: linear-gradient(135deg, #f3e8ff, #e0f2fe);
+  --system-avatar-border: #c084fc;
+
+  --avatar-default-bg: linear-gradient(135deg, #e0f2fe, #f3e8ff);
+  --avatar-default-border: #7dd3fc;
+
+  --card-system-bg: #faf5ff;
+  --card-system-border: #e9d5ff;
 
   --pill-encrypted-bg: var(--color-light-encrypted-bg);
   --pill-encrypted-border: var(--color-light-encrypted-border);

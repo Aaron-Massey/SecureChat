@@ -175,14 +175,14 @@ export class P2PManager {
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         const cStr = event.candidate.candidate || '';
-        const cType = cStr.includes('typ host') ? 'HOST (LAN)' : cStr.includes('typ srflx') ? 'STUN (Public IP)' : cStr.includes('typ relay') ? 'TURN (Relay)' : 'UNKNOWN';
-        console.log(`[ICE GENERATED] Peer ${peerId} candidate generated: [${cType}]`);
+        const cType = cStr.includes('typ host') ? 'HOST' : cStr.includes('typ srflx') ? 'STUN' : cStr.includes('typ relay') ? 'TURN' : 'UNKNOWN';
+        console.log(`ICE candidate generated for peer ${peerId} (${cType})`);
         this.socket.emit('new-ice-candidate', { recipientId: peerId, payload: event.candidate });
       }
     };
 
     (peerConnection as unknown as { onicecandidateerror: (event: { errorText?: string; errorCode?: number; url?: string }) => void }).onicecandidateerror = (event) => {
-      console.warn(`[ICE CANDIDATE ERROR] Peer ${peerId} error: ${event.errorText || event.errorCode} (server: ${event.url})`);
+      console.warn(`ICE candidate error for peer ${peerId}: ${event.errorText || event.errorCode} (${event.url})`);
     };
 
     peerConnection.oniceconnectionstatechange = () => {

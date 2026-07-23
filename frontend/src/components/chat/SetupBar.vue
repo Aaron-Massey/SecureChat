@@ -1,15 +1,14 @@
 <template>
   <div class="setup-container">
-    <!-- Inline Quick Bar (Full Width & Header Integration) -->
-    <div class="setup-bar glass-panel" :class="{ 'compact-mode': compact }">
+    <div class="setup-bar panel" :class="{ 'compact-mode': compact }">
       <div class="field-group">
         <div class="input-wrapper">
-          <i class="pi pi-user input-icon"></i>
+          <User class="input-icon" :size="16" />
           <InputText
             :model-value="displayName"
             @update:model-value="$emit('update:displayName', $event ?? '')"
             placeholder="Display Name"
-            class="cyber-input"
+            class="input-field"
             @input="$emit('inputStarted')"
           />
         </div>
@@ -17,13 +16,13 @@
 
       <div class="field-group">
         <div class="input-wrapper">
-          <i class="pi pi-lock input-icon"></i>
+          <Lock class="input-icon" :size="16" />
           <InputText
             :model-value="passwordInput"
             @update:model-value="$emit('update:passwordInput', $event ?? '')"
-            type="password"
-            placeholder="Passphrase (leave empty for plaintext)"
-            class="cyber-input"
+            type="text"
+            placeholder="Passphrase (optional)"
+            class="input-field"
             @keydown.enter="$emit('setupFinalized')"
             @blur="$emit('setupFinalized')"
             @input="$emit('inputStarted')"
@@ -38,7 +37,7 @@
           :options="cipherOptions"
           optionLabel="label"
           optionValue="value"
-          class="cyber-dropdown"
+          class="dropdown-field"
         />
       </div>
     </div>
@@ -46,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-// Props & Emits for SetupBar
+import { User, Lock } from '@lucide/vue';
 
 defineProps<{
   displayName: string;
@@ -112,7 +111,7 @@ const cipherOptions = [
   pointer-events: none;
 }
 
-:deep(.cyber-input) {
+:deep(.input-field) {
   width: 100%;
   padding-left: 2.25rem !important;
   background: var(--bg-glass-input) !important;
@@ -121,19 +120,19 @@ const cipherOptions = [
   height: 2.375rem;
 }
 
-:deep(.cyber-input:focus) {
+:deep(.input-field:focus) {
   border-color: var(--accent-cyan) !important;
   box-shadow: 0 0 10px var(--accent-cyan-glow) !important;
 }
 
-:deep(.cyber-dropdown) {
+:deep(.dropdown-field) {
   width: 100%;
   height: 2.375rem;
   background: var(--bg-glass-input) !important;
   border: 1px solid var(--border-subtle) !important;
 }
 
-:deep(.cyber-dropdown .p-dropdown-label) {
+:deep(.dropdown-field .p-dropdown-label) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -141,7 +140,7 @@ const cipherOptions = [
 }
 
 .apply-btn {
-  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(16, 185, 129, 0.2)) !important;
+  background: var(--btn-secondary-bg) !important;
   border: 1px solid var(--accent-cyan) !important;
   color: var(--text-primary) !important;
   font-size: 0.85rem !important;
@@ -150,7 +149,7 @@ const cipherOptions = [
 }
 
 .apply-btn:hover {
-  background: linear-gradient(135deg, rgba(0, 242, 254, 0.4), rgba(16, 185, 129, 0.4)) !important;
+  background: var(--btn-secondary-hover-bg) !important;
   box-shadow: var(--shadow-glow-cyan) !important;
 }
 

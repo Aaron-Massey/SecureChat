@@ -1,5 +1,5 @@
 /**
- * GOF Strategy Pattern: Theme Strategy
+ * Strategy Pattern: ThemeStrategy
  * Encapsulates dark mode and light mode color palette strategies for SecureChat P2P.
  */
 
