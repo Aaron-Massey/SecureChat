@@ -29,7 +29,7 @@ describe('MediaAttachment', () => {
       }
     });
 
-    expect(wrapper.text()).toContain('Click to View Image');
+    expect(wrapper.text()).toContain('Preview Image');
     expect(wrapper.find('img').exists()).toBe(false);
 
     // Click reveal button

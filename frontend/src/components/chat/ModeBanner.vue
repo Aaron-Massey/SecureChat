@@ -1,21 +1,37 @@
 <template>
   <div class="banner-wrapper">
+    <!-- Network Status Alert -->
     <div v-if="connectionStatus === 'reconnecting'" class="mode-banner reconnecting-mode" role="status" aria-live="polite">
-      <strong>Network Warning: Reconnecting...</strong>
-      <span>Connection lost. Automatically attempting to reconnect...</span>
-    </div>
-    <div v-else-if="connectionStatus === 'disconnected'" class="mode-banner disconnected-mode" role="status" aria-live="polite">
-      <strong>Network Disconnected</strong>
-      <span>Unable to reach signaling server. Please check your network.</span>
+      <div class="banner-header">
+        <span class="status-dot warning-pulse"></span>
+        <strong>Signaling Reconnecting...</strong>
+      </div>
+      <span class="banner-subtext">Connection interrupted. Re-establishing connection...</span>
     </div>
 
-    <div v-if="!isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite">
-      <strong>Plaintext mode enabled.</strong>
-      <span>Outgoing messages will be sent without encryption.</span>
+    <div v-else-if="connectionStatus === 'disconnected'" class="mode-banner disconnected-mode" role="status" aria-live="polite">
+      <div class="banner-header">
+        <span class="status-dot error-pulse"></span>
+        <strong>Network Disconnected</strong>
+      </div>
+      <span class="banner-subtext">Signaling server unreachable. Retrying automatically...</span>
     </div>
+
+    <!-- Encryption Mode Status Bar -->
+    <div v-if="!isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite">
+      <div class="banner-header">
+        <i class="pi pi-lock-open banner-icon"></i>
+        <strong>Plaintext Mode Active</strong>
+      </div>
+      <span class="banner-subtext">Messages sent unencrypted across P2P channel. Enter passphrase to secure connection.</span>
+    </div>
+
     <div v-else class="mode-banner encrypted-mode" role="status" aria-live="polite">
-      <strong>Encrypted mode enabled.</strong>
-      <span>Outgoing messages will be protected with the selected cipher.</span>
+      <div class="banner-header">
+        <i class="pi pi-shield banner-icon"></i>
+        <strong>End-to-End Encryption Enabled</strong>
+      </div>
+      <span class="banner-subtext">Messages and media attachments are cryptographically protected.</span>
     </div>
   </div>
 </template>
@@ -36,36 +52,81 @@ defineProps<{
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
+
 .mode-banner {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 0.625rem 0.75rem;
-  border-radius: 0.375rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
-  line-height: 1.4;
+  font-size: 0.825rem;
+  backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-fast);
 }
-.mode-banner strong {
-  letter-spacing: 0.05em;
+
+.banner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+
+.banner-header strong {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.banner-icon {
+  font-size: 0.95rem;
+}
+
+.banner-subtext {
+  font-size: 0.775rem;
+  opacity: 0.85;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.warning-pulse {
+  background: var(--accent-amber);
+  animation: status-pulse 1.2s infinite ease-in-out;
+  box-shadow: 0 0 8px var(--accent-amber);
+}
+
+.error-pulse {
+  background: var(--accent-rose);
+  animation: status-pulse 1.2s infinite ease-in-out;
+  box-shadow: 0 0 8px var(--accent-rose);
+}
+
 .plaintext-mode {
-  background: #3a1f00;
-  color: #ffd48a;
-  border-color: #ff9f1a;
+  background: rgba(245, 158, 11, 0.12);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.35);
 }
+
 .encrypted-mode {
-  background: #10263a;
-  color: #b7e3ff;
-  border-color: #4aa3ff;
+  background: rgba(0, 242, 254, 0.1);
+  color: var(--accent-cyan);
+  border-color: rgba(0, 242, 254, 0.3);
+  box-shadow: var(--shadow-glow-cyan);
 }
+
 .reconnecting-mode {
-  background: #3d3400;
-  color: #fff1a8;
-  border-color: #ffd700;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
 }
+
 .disconnected-mode {
-  background: #4a120f;
-  color: #ffd1cb;
-  border-color: #ff5a4f;
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.4);
 }
 </style>

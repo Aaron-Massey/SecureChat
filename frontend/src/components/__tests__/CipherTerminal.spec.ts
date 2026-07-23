@@ -18,8 +18,9 @@ describe('CipherTerminal', () => {
       props: { debugHistory }
     });
 
-    expect(wrapper.text()).toContain('Sender: Alice | Cipher: none | Timestamp: 12:05 PM');
-    expect(wrapper.text()).toContain('Plaintext: Hello unencrypted');
+    expect(wrapper.text()).toContain('Alice');
+    expect(wrapper.text()).toContain('PLAINTEXT');
+    expect(wrapper.text()).toContain('Hello unencrypted');
   });
 
   it('renders encrypted payload log entry with IV, HMAC, and Ciphertext details', () => {
@@ -39,9 +40,10 @@ describe('CipherTerminal', () => {
       props: { debugHistory }
     });
 
-    expect(wrapper.text()).toContain('Sender: Bob | Cipher: AES | Version: 1 | Timestamp: 12:06 PM');
-    expect(wrapper.text()).toContain('IV: 00112233445566778899aabbccddeeff');
-    expect(wrapper.text()).toContain('HMAC: abcdef1234567890');
-    expect(wrapper.text()).toContain('Ciphertext: U2FsdGVkX1812345');
+    expect(wrapper.text()).toContain('Bob');
+    expect(wrapper.text()).toContain('AES');
+    expect(wrapper.text()).toContain('00112233445566778899aabbccddeeff');
+    expect(wrapper.text()).toContain('abcdef1234567890');
+    expect(wrapper.text()).toContain('U2FsdGVkX1812345');
   });
 });

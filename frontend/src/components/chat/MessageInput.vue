@@ -11,14 +11,14 @@
       </div>
     </div>
 
-    <div class="input-area p-d-flex p-jc-between p-ai-center">
+    <div class="input-area glass-panel">
       <input
         type="file"
         ref="fileInputRef"
         style="display: none"
         @change="handleFileSelected"
       />
-      
+
       <Button
         icon="pi pi-paperclip"
         class="p-button-secondary file-attach-btn"
@@ -30,10 +30,16 @@
         ref="messageInputRef"
         v-model="textInput"
         @keyup.enter="handleSend"
-        placeholder="Type a message..."
-        style="flex:1; margin: 0 12px;"
+        placeholder="Type an encrypted message..."
+        class="chat-text-input"
       />
-      <Button label=" Send" icon="pi pi-send" @click="handleSend" />
+
+      <Button
+        label=" Send"
+        icon="pi pi-send"
+        class="send-btn"
+        @click="handleSend"
+      />
     </div>
   </div>
 </template>
@@ -91,7 +97,7 @@ const handleFileSelected = (event: Event) => {
   if (!file) return;
 
   if (file.size > MAX_FILE_SIZE) {
-    showFileToast(`File "${file.name}" (${formatFileSize(file.size)}) exceeds the maximum allowed size of 25 MB.`);
+    showFileToast(`File "${file.name}" (${formatFileSize(file.size)}) exceeds maximum size of 25 MB.`);
     target.value = '';
     return;
   }
@@ -129,14 +135,58 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   position: relative;
+  width: 100%;
 }
 
 .input-area {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: var(--shadow-glass);
 }
 
 .file-attach-btn {
-  margin-right: 0.25rem;
+  height: 2.375rem;
+  width: 2.375rem;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: var(--radius-md) !important;
+  flex-shrink: 0;
+}
+
+.chat-text-input {
+  flex: 1;
+  height: 2.375rem;
+  padding-left: 1.125rem !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-glass-input) !important;
+}
+
+.send-btn {
+  height: 2.375rem;
+  padding: 0 1rem !important;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)) !important;
+  border: none !important;
+  color: var(--bg-dark-root) !important;
+  font-weight: 700 !important;
+  flex-shrink: 0;
+  border-radius: var(--radius-md) !important;
+}
+
+.send-btn :deep(.p-button-icon) {
+  margin-right: 0.375rem !important;
+}
+
+.send-btn:hover {
+  box-shadow: var(--shadow-glow-cyan) !important;
+  opacity: 0.95;
 }
 
 .toast-expand-wrapper {
@@ -160,13 +210,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #4a1818;
-  color: #ffaaaa;
-  border: 1px solid #993333;
-  border-radius: 0.375rem;
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  border-radius: var(--radius-md);
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.4);
+  backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .toast-message {
@@ -177,7 +228,7 @@ onUnmounted(() => {
 .toast-close-btn {
   background: transparent;
   border: none;
-  color: #ffaaaa;
+  color: #fda4af;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
@@ -204,4 +255,3 @@ onUnmounted(() => {
   transform: translateY(-0.25rem);
 }
 </style>
-

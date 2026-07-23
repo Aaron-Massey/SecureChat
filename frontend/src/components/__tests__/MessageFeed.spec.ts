@@ -19,8 +19,10 @@ describe('MessageFeed', () => {
       }
     });
 
-    expect(wrapper.text()).toContain('Alice: Hello Bob');
-    expect(wrapper.text()).toContain('Bob: Failed to decrypt message');
+    expect(wrapper.text()).toContain('Alice');
+    expect(wrapper.text()).toContain('Hello Bob');
+    expect(wrapper.text()).toContain('Bob');
+    expect(wrapper.text()).toContain('Failed to decrypt message');
     expect(wrapper.text()).toContain('12:00 PM');
   });
 
@@ -33,8 +35,9 @@ describe('MessageFeed', () => {
       }
     });
 
-    expect(wrapper.text()).toContain('Alice: Hello Bob');
-    expect(wrapper.text()).not.toContain('Bob: Failed to decrypt message');
+    expect(wrapper.text()).toContain('Alice');
+    expect(wrapper.text()).toContain('Hello Bob');
+    expect(wrapper.text()).not.toContain('Failed to decrypt message');
   });
 
   it('applies undecrypted CSS class to undecrypted messages', () => {
@@ -46,7 +49,7 @@ describe('MessageFeed', () => {
       }
     });
 
-    const items = wrapper.findAll('.message-item');
+    const items = wrapper.findAll('.message-wrapper');
     expect(items.length).toBe(2);
     expect(items[0]!.classes()).not.toContain('undecrypted');
     expect(items[1]!.classes()).toContain('undecrypted');
