@@ -3,7 +3,6 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY config.json ./config.json
-COPY .env* ./
 COPY shared/ ./shared/
 COPY frontend/package*.json ./frontend/
 
