@@ -185,37 +185,24 @@ SecureChat includes unit and integration tests written with [Vitest](https://vit
 
 ## Deploying to Remote Server
 
-### Option 1: Git Deployment with Arcane (Raspberry Pi PaaS)
-If you manage your Pi containers using [Arcane](https://github.com/arcane-app/arcane) or a similar Git-backed Docker UI:
-
-1. **Connect Repository**: Point Arcane to your Git repository (`https://github.com/Aaron-Massey/SecureChat.git`).
-2. **Compose Detection**: Arcane will automatically detect `docker-compose.yml` in the root directory.
-3. **Environment Variables**: Configure non-default ports or secrets (e.g. `BACKEND_PORT`, `FRONTEND_PORT`, TURN settings) in Arcane's stack environment variables or via `.env`.
-4. **Deploy & Update**: Arcane will pull updates from `main` and execute `docker compose up --build -d`.
-   - Alternatively, execute `npm run deploy:git` (or `sh pi/deploy-git.sh`) on the server after pulling code via Git.
-
-### Option 2: Automated SSH & Docker Tarball Deployment
+### Option 1: Automated SSH Deployment (Recommended)
 Ensure your `.env` contains your server's connection details (`SERVER_HOST`, `SERVER_USER`, etc.), then execute:
 ```bash
 npm run deploy:server
-```
-*Or build and export tarballs manually:*
-```bash
-npm run docker:export
 ```
 *You can also pass dynamic CLI flags:*
 ```bash
 npm run deploy:server -- --host=192.168.1.50 --user=deploy --port=22
 ```
 
-### Option 3: Manual Tarball Container Update Script
-If tarball images (`backend-image.tar`, `frontend-image.tar`) have been copied to your target server:
+### Option 2: Container Update Script on the Server
+If you cloned the repo directly onto your target server:
 ```bash
 npm run server:update
 ```
-*(or run `sh pi/update-containers.sh` directly on the server).*
+*(or run `sh pi/update-containers.sh` / `sh pi/deploy-git.sh` directly on the server).*
 
-### Option 4: GitHub Actions CI/CD
+### Option 3: GitHub Actions CI/CD
 Add `SERVER_HOST`, `SERVER_USER`, and `SERVER_SSH_KEY` to your repository Secrets on GitHub. Pushing to `main` will automatically build Docker images and deploy updates to your remote server.
 
 ---

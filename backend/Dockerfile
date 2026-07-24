@@ -2,21 +2,26 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY config.json ./config.json
+COPY backend/package*.json ./backend/
 
-COPY . ./
+WORKDIR /app/backend
+RUN npm ci
+
+COPY backend/ ./
+
 RUN npm run build
 
 FROM node:22-alpine AS runtime
 
-WORKDIR /app
+WORKDIR /app/backend
 ENV NODE_ENV=production
 
-COPY package*.json ./
-RUN npm install --omit=dev && npm cache clean --force
+COPY backend/package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
-COPY --from=build /app/dist ./dist
+COPY --from=build /app/config.json /app/config.json
+COPY --from=build /app/backend/dist ./dist
 
 EXPOSE 3000
 

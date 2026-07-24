@@ -14,26 +14,16 @@ echo "Step 1: Pulling latest changes from git..."
 git pull
 
 echo "Step 2: Syncing environment configuration..."
-if [ ! -f .env ]; then
-  if [ -f config.json ]; then
-    echo "Creating .env from config.json..."
-    FRONTEND_PORT=$(grep -o '"FRONTEND_PORT":[ ]*[0-9]*' config.json | grep -o '[0-9]*')
-    BACKEND_PORT=$(grep -o '"BACKEND_PORT":[ ]*[0-9]*' config.json | grep -o '[0-9]*')
-    echo "FRONTEND_PORT=${FRONTEND_PORT:-5173}" > .env
-    echo "BACKEND_PORT=${BACKEND_PORT:-3000}" >> .env
-  else
-    echo "FRONTEND_PORT=5173" > .env
-    echo "BACKEND_PORT=3000" >> .env
-  fi
+if [ -f config.json ]; then
+  FRONTEND_PORT=$(grep -o '"FRONTEND_PORT":[ ]*[0-9]*' config.json | grep -o '[0-9]*')
+  BACKEND_PORT=$(grep -o '"BACKEND_PORT":[ ]*[0-9]*' config.json | grep -o '[0-9]*')
+  echo "FRONTEND_PORT=${FRONTEND_PORT:-5173}" > .env
+  echo "BACKEND_PORT=${BACKEND_PORT:-3000}" >> .env
 fi
 
-if [ ! -d certs ] || [ ! -f certs/server.crt ] || [ ! -f certs/server.key ]; then
-  echo "Certificates not found in certs/. Generating self-signed certificates on host..."
-  mkdir -p certs
-  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout certs/server.key \
-    -out certs/server.crt \
-    -subj "/CN=localhost" 2>/dev/null || echo "Warning: openssl failed on host."
+if [ ! -d certs ]; then
+  echo "WARNING: 'certs' directory not found."
+  echo "Ensure server.crt and server.key exist in 'certs/' directory."
 fi
 
 echo "Step 3: Building and recreating Docker containers..."
