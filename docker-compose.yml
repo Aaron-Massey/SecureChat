@@ -18,6 +18,6 @@ services:
       - backend
     ports:
       - "${FRONTEND_PORT:-5173}:80"
-      - "443:443"
+      - "${HTTPS_PORT:-443}:443"
     volumes:
       - ./certs:/etc/nginx/certs:ro
