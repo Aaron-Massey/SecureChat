@@ -35,6 +35,36 @@
         class="chat-text-input"
       />
 
+      <div
+        v-if="quotaMax && quotaMax > 0"
+        class="quota-indicator-wrapper"
+        v-tooltip.top="`Message Quota: ${quotaUsed || 0} / ${quotaMax} messages used in 1-min window`"
+      >
+        <svg class="quota-ring" width="22" height="22" viewBox="0 0 24 24">
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            fill="none"
+            stroke="var(--border-subtle, rgba(255, 255, 255, 0.15))"
+            stroke-width="2.5"
+          />
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            fill="none"
+            :stroke="quotaColor"
+            stroke-width="2.5"
+            stroke-dasharray="56.548"
+            :stroke-dashoffset="dashOffset"
+            stroke-linecap="round"
+            transform="rotate(-90 12 12)"
+            class="quota-progress-circle"
+          />
+        </svg>
+      </div>
+
       <Button
         class="send-btn"
         @click="handleSend"
@@ -47,9 +77,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Paperclip, Send } from '@lucide/vue';
 import { MAX_FILE_SIZE, formatFileSize } from '@/utils/fileChunker';
+
+const props = defineProps<{
+  quotaUsed?: number;
+  quotaMax?: number;
+}>();
 
 const emit = defineEmits<{
   (e: 'send', text: string): void;
@@ -60,6 +95,27 @@ const textInput = ref('');
 const fileError = ref<string | null>(null);
 const messageInputRef = ref<{ $el?: HTMLInputElement; focus?: () => void } | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const quotaRatio = computed(() => {
+  if (!props.quotaMax || props.quotaMax <= 0) return 0;
+  return (props.quotaUsed || 0) / props.quotaMax;
+});
+
+const dashOffset = computed(() => {
+  const circumference = 56.548;
+  const ratio = Math.min(1, Math.max(0, quotaRatio.value));
+  return circumference * (1 - ratio);
+});
+
+const quotaColor = computed(() => {
+  if (quotaRatio.value >= 0.80) {
+    return '#ef4444'; // Red (>= 80% used)
+  }
+  if (quotaRatio.value >= 0.66) {
+    return '#eab308'; // Yellow (>= 66% used)
+  }
+  return '#94a3b8'; // Gray/White (< 66% used)
+});
 
 let toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -170,6 +226,23 @@ onUnmounted(() => {
   padding-left: 1.125rem !important;
   border-radius: var(--radius-md) !important;
   background: var(--bg-glass-input) !important;
+}
+
+.quota-indicator-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: help;
+  padding: 0 0.125rem;
+}
+
+.quota-ring {
+  display: block;
+}
+
+.quota-progress-circle {
+  transition: stroke-dashoffset 0.35s ease, stroke 0.35s ease;
 }
 
 .send-btn {

@@ -20,6 +20,7 @@ export interface FileChunkMetadata {
 
 export interface SecurePayload {
   senderDisplayName: string;
+  senderSessionId?: string;
   type?: PayloadType;
   iv?: string;
   ciphertext?: string;

@@ -4,15 +4,19 @@ import MessageInput from '../chat/MessageInput.vue';
 import PrimeVue from 'primevue/config';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import Tooltip from 'primevue/tooltip';
 import { MAX_FILE_SIZE } from '@/utils/fileChunker';
+
+const defaultGlobal = {
+  plugins: [PrimeVue],
+  components: { InputText, Button },
+  directives: { tooltip: Tooltip }
+};
 
 describe('MessageInput', () => {
   it('renders input field, paperclip attachment button, and send button', () => {
     const wrapper = mount(MessageInput, {
-      global: {
-        plugins: [PrimeVue],
-        components: { InputText, Button }
-      }
+      global: defaultGlobal
     });
 
     expect(wrapper.find('input[type="file"]').exists()).toBe(true);
@@ -20,12 +24,19 @@ describe('MessageInput', () => {
     expect(wrapper.findAllComponents(Button).length).toBe(2);
   });
 
+  it('renders message quota indicator when quotaMax is passed', () => {
+    const wrapper = mount(MessageInput, {
+      props: { quotaUsed: 5, quotaMax: 30 },
+      global: defaultGlobal
+    });
+
+    expect(wrapper.find('.quota-indicator-wrapper').exists()).toBe(true);
+    expect(wrapper.find('.quota-ring').exists()).toBe(true);
+  });
+
   it('emits send event with input text and clears input on send', async () => {
     const wrapper = mount(MessageInput, {
-      global: {
-        plugins: [PrimeVue],
-        components: { InputText, Button }
-      }
+      global: defaultGlobal
     });
 
     const textInput = wrapper.findComponent(InputText);
@@ -40,10 +51,7 @@ describe('MessageInput', () => {
 
   it('does not emit send event if input is empty or whitespace', async () => {
     const wrapper = mount(MessageInput, {
-      global: {
-        plugins: [PrimeVue],
-        components: { InputText, Button }
-      }
+      global: defaultGlobal
     });
 
     const textInput = wrapper.findComponent(InputText);
@@ -57,10 +65,7 @@ describe('MessageInput', () => {
 
   it('emits sendFile event when a valid file under 25 MB is attached', async () => {
     const wrapper = mount(MessageInput, {
-      global: {
-        plugins: [PrimeVue],
-        components: { InputText, Button }
-      }
+      global: defaultGlobal
     });
 
     const fileInput = wrapper.find('input[type="file"]');
@@ -78,10 +83,7 @@ describe('MessageInput', () => {
 
   it('displays error message and rejects files exceeding 25 MB', async () => {
     const wrapper = mount(MessageInput, {
-      global: {
-        plugins: [PrimeVue],
-        components: { InputText, Button }
-      }
+      global: defaultGlobal
     });
 
     const fileInput = wrapper.find('input[type="file"]');

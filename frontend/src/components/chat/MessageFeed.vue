@@ -26,7 +26,14 @@
         class="message-wrapper fade-in"
         :class="{ 'undecrypted': !msg.decrypted, 'system-wrapper': isSystemMessage(msg) }"
       >
-        <div class="avatar-icon" :class="{ 'system-avatar': isSystemMessage(msg) }">
+        <div
+          class="avatar-icon"
+          :class="{ 'system-avatar': isSystemMessage(msg) }"
+          :style="{
+            color: getSenderColor(msg),
+            borderColor: getSenderColor(msg)
+          }"
+        >
           <ServerCog v-if="isSystemMessage(msg)" :size="16" />
           <template v-else>{{ getAvatarInitial(msg.sender) }}</template>
         </div>
@@ -34,8 +41,14 @@
         <div class="bubble-card" :class="{ 'system-card': isSystemMessage(msg) }">
           <div class="bubble-header">
             <div class="sender-info">
-              <span class="sender-name">{{ msg.sender }}</span>
+              <span
+                class="sender-name"
+                :style="{ color: getSenderColor(msg) }"
+              >
+                {{ msg.sender }}
+              </span>
               <span v-if="isSystemMessage(msg)" class="system-badge">SYSTEM</span>
+              <span v-if="msg.isPending" class="pending-badge" title="Queued offline message"><Clock :size="12" /> Queued</span>
             </div>
             <span class="timestamp">{{ msg.timestamp }}</span>
           </div>
@@ -65,7 +78,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { MessageSquare, Lock, ServerCog } from '@lucide/vue';
+import { MessageSquare, Lock, ServerCog, Clock } from '@lucide/vue';
 import type { ChatMessage } from '@/composables/useP2P';
 import MediaAttachment from './MediaAttachment.vue';
 
@@ -79,6 +92,30 @@ defineEmits<{
 }>();
 
 const feedRef = ref<HTMLElement | null>(null);
+
+const userColors = [
+  'var(--accent-cyan)',
+  'var(--accent-green)',
+  'var(--accent-orange)',
+  'var(--accent-pink)',
+  'var(--accent-purple)',
+  'var(--accent-yellow)'
+];
+
+const getSenderColor = (msg: ChatMessage): string => {
+  if (msg.isSystem || msg.sender === 'System') {
+    return 'var(--accent-red)';
+  }
+
+  const sessionKey = msg.senderSessionId || msg.sender;
+  let hash = 0;
+  for (let i = 0; i < sessionKey.length; i++) {
+    hash = (hash << 5) - hash + sessionKey.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % userColors.length;
+  return userColors[index]!;
+};
 
 const filteredChatHistory = computed(() => {
   if (props.showUndecrypted) {
@@ -192,8 +229,8 @@ watch(
 
 .system-avatar {
   background: var(--system-avatar-bg);
-  border-color: var(--system-avatar-border);
-  color: var(--accent-purple);
+  border-color: var(--system-avatar-border) !important;
+  color: var(--accent-red) !important;
 }
 
 .bubble-card {
@@ -231,7 +268,7 @@ watch(
 }
 
 .system-card .sender-name {
-  color: var(--accent-purple);
+  color: var(--accent-red) !important;
 }
 
 .system-badge {
@@ -243,6 +280,19 @@ watch(
   padding: 0.1rem 0.35rem;
   border-radius: var(--radius-xs);
   letter-spacing: 0.05em;
+}
+
+.pending-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-xs);
 }
 
 .timestamp {

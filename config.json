@@ -4,6 +4,8 @@
   "CORS_ORIGIN": "*",
   "KEY_DERIVATION_ITERATIONS": 10,
   "KEY_DERIVATION_SALT": "securechat-default-salt",
+  "MAX_QUEUE_SIZE": 50,
+  "MAX_MESSAGES_PER_MINUTE": 30,
   "USE_HTTPS": true,
   "SSL_CERT_PATH": "certs/server.crt",
   "SSL_KEY_PATH": "certs/server.key"
