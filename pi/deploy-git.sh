@@ -27,9 +27,13 @@ if [ ! -f .env ]; then
   fi
 fi
 
-if [ ! -d certs ]; then
-  echo "WARNING: 'certs' directory not found."
-  echo "Ensure server.crt and server.key exist in 'certs/' directory."
+if [ ! -d certs ] || [ ! -f certs/server.crt ] || [ ! -f certs/server.key ]; then
+  echo "Certificates not found in certs/. Generating self-signed certificates on host..."
+  mkdir -p certs
+  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout certs/server.key \
+    -out certs/server.crt \
+    -subj "/CN=localhost" 2>/dev/null || echo "Warning: openssl failed on host."
 fi
 
 echo "Step 3: Building and recreating Docker containers..."

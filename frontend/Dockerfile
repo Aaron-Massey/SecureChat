@@ -19,11 +19,10 @@ FROM nginx:1.27-alpine AS runtime
 RUN apk add --no-cache openssl
 
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
-COPY frontend/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY frontend/40-auto-certs.sh /docker-entrypoint.d/40-auto-certs.sh
+RUN chmod +x /docker-entrypoint.d/40-auto-certs.sh
 COPY --from=build /app/frontend/dist /usr/share/nginx/html
 
 EXPOSE 80 443
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
