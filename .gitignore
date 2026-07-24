@@ -10,6 +10,14 @@ frontend/dist/
 backend/.env
 frontend/.local
 .env
+certs/*
 
 # Root dependencies
 node_modules/
+
+# Docker export artifacts
+exports/
+
+# IDE Files
+.idea/
+.vscode/

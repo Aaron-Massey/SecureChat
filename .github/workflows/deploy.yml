@@ -1,0 +1,53 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU for ARM64 build
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ARM64 Docker images
+        run: |
+          mkdir -p exports
+          docker buildx build --platform linux/arm64 -f backend/Dockerfile -t securechat-backend:latest --output type=docker,dest=exports/backend-image.tar .
+          docker buildx build --platform linux/arm64 -f frontend/Dockerfile -t securechat-frontend:latest --output type=docker,dest=exports/frontend-image.tar .
+
+      - name: Deploy to Raspberry Pi via SSH
+        uses: appleboy/scp-action@v0.1.7
+        if: ${{ env.PI_HOST != '' }}
+        env:
+          PI_HOST: ${{ secrets.PI_HOST }}
+        with:
+          host: ${{ secrets.PI_HOST }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          port: ${{ secrets.PI_PORT || 22 }}
+          source: "exports/*.tar,docker-compose.yml,.env,config.json,pi/update-containers.sh"
+          target: "${{ secrets.PI_PATH || '~/securechat' }}"
+
+      - name: Update containers on Pi
+        uses: appleboy/ssh-action@v1.0.3
+        if: ${{ env.PI_HOST != '' }}
+        env:
+          PI_HOST: ${{ secrets.PI_HOST }}
+        with:
+          host: ${{ secrets.PI_HOST }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          port: ${{ secrets.PI_PORT || 22 }}
+          script: |
+            cd ${{ secrets.PI_PATH || '~/securechat' }}
+            sh pi/update-containers.sh

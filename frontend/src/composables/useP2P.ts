@@ -1,128 +1,353 @@
-import { ref, reactive } from 'vue';
-import { io } from 'socket.io-client';
-import type { SecurePayload } from '../../../shared/types/payload';
+import { ref, onUnmounted } from 'vue';
+import type { SecurePayload, FileMetadata } from '@shared/types/payload';
 import { useCryptoStore } from '@/stores/crypto';
+import { P2PManager, type ConnectionStatus } from '@/services/p2pManager';
+import { PayloadFactory } from '@/factories/payload.factory';
+import { ConnectionStateContext } from '@/patterns/connectionState';
+import { CommandQueueManager, SendTextMessageCommand, SendFileMessageCommand } from '@/commands/chatCommands';
+import {
+  sliceFileIntoChunks,
+  arrayBufferToBase64,
+  base64ToArrayBuffer,
+  computeBufferHash,
+  createObjectUrlFromBuffers,
+  DEFAULT_CHUNK_SIZE
+} from '@/utils/fileChunker';
+
+export interface ChatMessage {
+  id?: string;
+  sender: string;
+  text?: string;
+  decrypted: boolean;
+  timestamp: string;
+  fileAttachment?: {
+    fileId: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    mediaUrl?: string;
+    progress?: number;
+    isTransferring?: boolean;
+  };
+}
 
 export function useP2P() {
   const cryptoStore = useCryptoStore();
-  const backendUrl = `http://${window.location.hostname}:${import.meta.env.VITE_BACKEND_PORT}`;
-  const socket = io(backendUrl);
-
-  const peerConnections = reactive<Map<string, RTCPeerConnection>>(new Map());
-  const dataChannels = reactive<Map<string, RTCDataChannel>>(new Map());
-
-  const chatHistory = ref<{ sender: string; text: string; decrypted: boolean }[]>([]);
+  const chatHistory = ref<ChatMessage[]>([]);
   const debugHistory = ref<SecurePayload[]>([]);
+  const connectionStatus = ref<ConnectionStatus>('disconnected');
+  const connectionDetail = ref<string>('Initializing...');
 
-  const createPeerConnection = (peerId: string) => {
-    const peerConnection = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
+  const stateContext = new ConnectionStateContext();
+  const commandQueue = new CommandQueueManager();
 
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit('new-ice-candidate', { recipientId: peerId, payload: event.candidate });
-      }
-    };
+  const backendUrl = window.location.origin;
 
-    peerConnection.ondatachannel = (event) => {
-      const dataChannel = event.channel;
-      dataChannels.set(peerId, dataChannel);
-      setupDataChannel(dataChannel, peerId);
-    };
+  const handleIncomingMessage = (payload: SecurePayload) => {
+    debugHistory.value.push(payload);
+    const timestamp = payload.timestamp;
 
-    peerConnections.set(peerId, peerConnection);
-    return peerConnection;
-  };
+    if (payload.type === 'file-header') {
+      return; // Handled separately in handleFileHeader
+    }
 
-  const setupDataChannel = (channel: RTCDataChannel, peerId: string) => {
-    channel.onopen = () => console.log(`P2P Connection with ${peerId} established!`);
-    channel.onclose = () => console.log(`P2P Connection with ${peerId} closed.`);
-    channel.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
-      debugHistory.value.push(payload);
-
+    if (payload.cipher === 'none' && payload.plaintext) {
+      chatHistory.value.push({
+        sender: payload.senderDisplayName,
+        text: payload.plaintext,
+        decrypted: true,
+        timestamp
+      });
+    } else if (payload.ciphertext) {
       const result = cryptoStore.decryptMessage(payload);
       if (result.success) {
-        chatHistory.value.push({ sender: result.senderDisplayName, text: result.plaintext, decrypted: true });
+        chatHistory.value.push({
+          sender: result.senderDisplayName,
+          text: result.plaintext,
+          decrypted: true,
+          timestamp
+        });
       } else {
-        chatHistory.value.push({ sender: payload.senderDisplayName, text: 'Failed to decrypt message', decrypted: false });
+        chatHistory.value.push({
+          sender: payload.senderDisplayName,
+          text: 'Failed to decrypt message',
+          decrypted: false,
+          timestamp
+        });
       }
-    };
+    }
   };
 
-  socket.on('other-clients', (otherClientIds: string[]) => {
-    otherClientIds.forEach(async (peerId) => {
-      const peerConnection = createPeerConnection(peerId);
-      const dataChannel = peerConnection.createDataChannel('secure-chat');
-      dataChannels.set(peerId, dataChannel);
-      setupDataChannel(dataChannel, peerId);
+  const handleFileHeaderReceived = (headerPayload: SecurePayload) => {
+    if (!headerPayload.fileMetadata) return;
+    const meta = headerPayload.fileMetadata;
+    const timestamp = headerPayload.timestamp;
 
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      socket.emit('webrtc-offer', { recipientId: peerId, payload: offer });
+    let isHeaderDecrypted = true;
+    if (headerPayload.cipher !== 'none') {
+      if (!cryptoStore.isReady) {
+        isHeaderDecrypted = false;
+      } else {
+        const headerDecryptRes = cryptoStore.decryptMessage(headerPayload);
+        if (!headerDecryptRes.success) {
+          isHeaderDecrypted = false;
+        }
+      }
+    }
+
+    chatHistory.value.push({
+      id: meta.fileId,
+      sender: headerPayload.senderDisplayName,
+      decrypted: isHeaderDecrypted,
+      text: isHeaderDecrypted ? undefined : `⚠️ Key verification failed for file "${meta.fileName}"`,
+      timestamp,
+      fileAttachment: {
+        fileId: meta.fileId,
+        fileName: meta.fileName,
+        fileSize: meta.fileSize,
+        mimeType: meta.mimeType,
+        progress: 0,
+        isTransferring: true
+      }
     });
-  });
+  };
 
-  socket.on('new-client', (peerId: string) => {
-    console.log(`New client connected: ${peerId}. Initiating connection.`);
-    createPeerConnection(peerId);
-  });
-
-  socket.on('webrtc-offer', async ({ senderId, payload }) => {
-    const peerConnection = peerConnections.get(senderId) ?? createPeerConnection(senderId);
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
-
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    socket.emit('webrtc-answer', { recipientId: senderId, payload: answer });
-  });
-
-  socket.on('webrtc-answer', async ({ senderId, payload }) => {
-    const peerConnection = peerConnections.get(senderId);
-    if (peerConnection) {
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
+  const handleFileChunkReceived = (
+    _chunkPayload: SecurePayload,
+    receivedChunks: number,
+    totalChunks: number
+  ) => {
+    if (!_chunkPayload.chunkMetadata) return;
+    const { fileId } = _chunkPayload.chunkMetadata;
+    const msg = chatHistory.value.find((m) => m.fileAttachment?.fileId === fileId);
+    if (msg && msg.fileAttachment) {
+      msg.fileAttachment.progress = Math.round((receivedChunks / totalChunks) * 100);
     }
-  });
+  };
 
-  socket.on('new-ice-candidate', async ({ senderId, payload }) => {
-    const peerConnection = peerConnections.get(senderId);
-    if (peerConnection) {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(payload));
-    }
-  });
+  const handleFileTransferComplete = (
+    fileId: string,
+    headerPayload: SecurePayload,
+    chunkPayloads: SecurePayload[]
+  ) => {
+    if (!headerPayload.fileMetadata) return;
+    const meta = headerPayload.fileMetadata;
 
-  socket.on('client-disconnected', (peerId: string) => {
-    const peerConnection = peerConnections.get(peerId);
-    if (peerConnection) {
-      peerConnection.close();
-      peerConnections.delete(peerId);
+    let keyVerificationPassed = true;
+
+    // Decrypt assembled chunk payloads if encrypted, or extract plaintext chunks
+    const decryptedBuffers: ArrayBuffer[] = chunkPayloads.map((chunkPayload) => {
+      if (chunkPayload.cipher !== 'none') {
+        if (!cryptoStore.isReady || !chunkPayload.ciphertext) {
+          keyVerificationPassed = false;
+          return new ArrayBuffer(0);
+        }
+        const decryptRes = cryptoStore.decryptMessage(chunkPayload);
+        if (decryptRes.success) {
+          return base64ToArrayBuffer(decryptRes.plaintext);
+        }
+        keyVerificationPassed = false;
+        console.warn(`Failed to decrypt file chunk for ${meta.fileName}:`, decryptRes.error);
+        return new ArrayBuffer(0);
+      }
+
+      const rawData = chunkPayload.plaintext || chunkPayload.ciphertext || '';
+      return base64ToArrayBuffer(rawData);
+    });
+
+    // Verify first chunk hash against metadata fileHash if present
+    if (keyVerificationPassed && meta.fileHash && decryptedBuffers.length > 0) {
+      const computedHash = computeBufferHash(decryptedBuffers[0] || new ArrayBuffer(0));
+      if (computedHash !== meta.fileHash) {
+        console.warn(`File hash verification mismatch for ${meta.fileName}`);
+        keyVerificationPassed = false;
+      }
     }
-    if (dataChannels.has(peerId)) {
-      dataChannels.delete(peerId);
+
+    const msg = chatHistory.value.find((m) => m.fileAttachment?.fileId === fileId);
+    if (msg && msg.fileAttachment) {
+      msg.fileAttachment.isTransferring = false;
+      msg.fileAttachment.progress = 100;
+      if (keyVerificationPassed) {
+        msg.decrypted = true;
+        msg.fileAttachment.mediaUrl = createObjectUrlFromBuffers(decryptedBuffers, meta.mimeType);
+      } else {
+        msg.decrypted = false;
+        msg.text = `⚠️ Key verification / decryption failed for file "${meta.fileName}"`;
+        msg.fileAttachment.mediaUrl = '';
+      }
     }
-    console.log(`Client ${peerId} disconnected.`);
-  });
+  };
+
+  const handleRekeyRequested = () => {
+    cryptoStore.rekey();
+    chatHistory.value.push({
+      sender: 'System',
+      text: 'Encryption keys have been rotated.',
+      decrypted: true,
+      timestamp: new Date().toLocaleTimeString()
+    });
+  };
+
+  const handleConnectionStatusChange = (status: ConnectionStatus, detail?: string) => {
+    const prevStatus = connectionStatus.value;
+    const currentStateObj = stateContext.setState(status);
+
+    connectionStatus.value = status;
+    connectionDetail.value = currentStateObj.getStatusDetail(detail);
+
+    if (prevStatus !== status && detail) {
+      chatHistory.value.push({
+        sender: 'System',
+        text: connectionDetail.value,
+        decrypted: true,
+        timestamp: new Date().toLocaleTimeString()
+      });
+    }
+
+    if (status === 'connected' && commandQueue.pendingCount > 0) {
+      commandQueue.flush();
+    }
+  };
+
+  const iceConfig = {
+    turnUrl: import.meta.env.VITE_TURN_SERVER_URL,
+    turnUsername: import.meta.env.VITE_TURN_USERNAME,
+    turnPassword: import.meta.env.VITE_TURN_PASSWORD
+  };
+
+  const p2pManager = new P2PManager(backendUrl, {
+    onMessageReceived: handleIncomingMessage,
+    onRekeyRequested: handleRekeyRequested,
+    onConnectionStatusChange: handleConnectionStatusChange,
+    onFileHeaderReceived: handleFileHeaderReceived,
+    onFileChunkReceived: handleFileChunkReceived,
+    onFileTransferComplete: handleFileTransferComplete
+  }, iceConfig);
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
-    try {
-      const encryptedPayload = cryptoStore.encryptMessage(plaintext, senderDisplayName);
-      const messageString = JSON.stringify(encryptedPayload);
-
-      dataChannels.forEach((channel, peerId) => {
-        if (channel.readyState === 'open') {
-          channel.send(messageString);
-        } else {
-          console.warn(`Data channel to ${peerId} is not open. Cannot send message.`);
-        }
-      });
-
-      chatHistory.value.push({ sender: 'Me', text: plaintext, decrypted: true });
-      debugHistory.value.push(encryptedPayload);
-    } catch (error) {
-      console.error("Failed to send encrypted message:", error);
+    const currentState = stateContext.state;
+    if (!currentState.canSend && connectionStatus.value !== 'connected') {
+      const cmd = new SendTextMessageCommand((t, s) => p2pManager.broadcastMessage(s === senderDisplayName ? PayloadFactory.createTextPayload(s, t) : cryptoStore.encryptMessage(t, s)), plaintext, senderDisplayName);
+      commandQueue.enqueue(cmd);
     }
+
+    sendP2PMessageDirect(plaintext, senderDisplayName);
   };
 
-  return { sendP2PMessage, chatHistory, debugHistory };
+  const sendP2PMessageDirect = (plaintext: string, senderDisplayName: string) => {
+    let payload: SecurePayload;
+    const timestamp = new Date().toLocaleTimeString();
+
+    if (cryptoStore.isReady) {
+      payload = cryptoStore.encryptMessage(plaintext, senderDisplayName);
+      payload.timestamp = timestamp;
+      payload.type = 'text';
+    } else {
+      payload = PayloadFactory.createTextPayload(senderDisplayName, plaintext, timestamp);
+    }
+
+    p2pManager.broadcastMessage(payload);
+
+    chatHistory.value.push({
+      sender: 'Me',
+      text: plaintext,
+      decrypted: true,
+      timestamp
+    });
+
+    debugHistory.value.push(payload);
+  };
+
+  const sendP2PFile = async (file: File, senderDisplayName: string): Promise<void> => {
+    const currentState = stateContext.state;
+    if (!currentState.canSend && connectionStatus.value !== 'connected') {
+      const cmd = new SendFileMessageCommand((f, s) => sendP2PFileDirect(f, s), file, senderDisplayName);
+      commandQueue.enqueue(cmd);
+      return;
+    }
+
+    await sendP2PFileDirect(file, senderDisplayName);
+  };
+
+  const sendP2PFileDirect = async (file: File, senderDisplayName: string): Promise<void> => {
+    const timestamp = new Date().toLocaleTimeString();
+    const rawChunks = await sliceFileIntoChunks(file);
+    const fileId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const fileHash = computeBufferHash(rawChunks[0] || new ArrayBuffer(0));
+
+    const fileMetadata: FileMetadata = {
+      fileId,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type || 'application/octet-stream',
+      totalChunks: rawChunks.length,
+      chunkSize: DEFAULT_CHUNK_SIZE,
+      fileHash
+    };
+
+    let headerPayload: SecurePayload;
+
+    if (cryptoStore.isReady) {
+      const encrypted = cryptoStore.encryptMessage(`FILE:${file.name}`, senderDisplayName);
+      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, encrypted, timestamp);
+    } else {
+      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, undefined, timestamp);
+    }
+
+    const chunkPayloads: SecurePayload[] = [];
+    const localBuffers: ArrayBuffer[] = [];
+
+    for (let i = 0; i < rawChunks.length; i++) {
+      const chunk = rawChunks[i];
+      if (!chunk) continue;
+      const base64Chunk = arrayBufferToBase64(chunk);
+      localBuffers.push(chunk);
+
+      let chunkPayload: SecurePayload;
+      const chunkMetadata = {
+        fileId,
+        chunkIndex: i,
+        totalChunks: rawChunks.length
+      };
+
+      if (cryptoStore.isReady) {
+        const encryptedChunk = cryptoStore.encryptMessage(base64Chunk, senderDisplayName);
+        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, encryptedChunk, undefined, timestamp);
+      } else {
+        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, undefined, base64Chunk, timestamp);
+      }
+
+      chunkPayloads.push(chunkPayload);
+    }
+
+    await p2pManager.sendFilePayloads(headerPayload, chunkPayloads);
+
+    const mediaUrl = createObjectUrlFromBuffers(localBuffers, fileMetadata.mimeType);
+
+    chatHistory.value.push({
+      id: fileId,
+      sender: 'Me',
+      decrypted: true,
+      timestamp,
+      fileAttachment: {
+        fileId,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: fileMetadata.mimeType,
+        mediaUrl,
+        progress: 100,
+        isTransferring: false
+      }
+    });
+
+    debugHistory.value.push(headerPayload);
+  };
+
+  onUnmounted(() => {
+    p2pManager.destroy();
+  });
+
+  return { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus, connectionDetail };
 }
+

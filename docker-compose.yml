@@ -1,0 +1,23 @@
+services:
+  backend:
+    image: securechat-backend:latest
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    volumes:
+      - ./certs:/app/certs:ro
+
+  frontend:
+    image: securechat-frontend:latest
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT}:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro

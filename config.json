@@ -1,5 +1,10 @@
 {
   "FRONTEND_PORT": 5173,
   "BACKEND_PORT": 3000,
-  "CORS_ORIGIN": "*"
+  "CORS_ORIGIN": "*",
+  "KEY_DERIVATION_ITERATIONS": 10,
+  "KEY_DERIVATION_SALT": "securechat-default-salt",
+  "USE_HTTPS": true,
+  "SSL_CERT_PATH": "certs/server.crt",
+  "SSL_KEY_PATH": "certs/server.key"
 }
