@@ -1,17 +1,13 @@
 services:
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    build: ./backend
     ports:
       - "${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}"
     volumes:
       - ./certs:/app/certs:ro
 
   frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
+    build: ./frontend
     depends_on:
       - backend
     ports:
