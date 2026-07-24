@@ -17,6 +17,8 @@
     "docker:export": "npm run docker:sync && node docker-export.mjs",
     "deploy:server": "node deploy-pi.mjs",
     "deploy:pi": "node deploy-pi.mjs",
+    "deploy:git": "sh pi/deploy-git.sh",
+    "arcane:update": "sh pi/deploy-git.sh",
     "server:update": "sh pi/update-containers.sh",
     "pi:update": "sh pi/update-containers.sh"
   },
