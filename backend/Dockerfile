@@ -6,7 +6,7 @@ COPY config.json ./config.json
 COPY backend/package*.json ./backend/
 
 WORKDIR /app/backend
-RUN npm ci
+RUN npm install
 
 COPY backend/ ./
 
@@ -18,7 +18,7 @@ WORKDIR /app/backend
 ENV NODE_ENV=production
 
 COPY backend/package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=build /app/config.json /app/config.json
 COPY --from=build /app/backend/dist ./dist
