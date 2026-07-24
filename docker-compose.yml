@@ -1,6 +1,5 @@
 services:
   backend:
-    image: securechat-backend:latest
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -10,7 +9,6 @@ services:
       - ./certs:/app/certs:ro
 
   frontend:
-    image: securechat-frontend:latest
     build:
       context: .
       dockerfile: frontend/Dockerfile
