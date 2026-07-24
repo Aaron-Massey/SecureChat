@@ -1,5 +1,8 @@
 import { type IceServerStrategy, IceStrategyResolver, type IceServerConfig } from '@/strategies/iceServerStrategy';
 
+/**
+ * Factory Method Pattern: PeerConnectionFactory
+ */
 export class PeerConnectionFactory {
   private strategy: IceServerStrategy;
 

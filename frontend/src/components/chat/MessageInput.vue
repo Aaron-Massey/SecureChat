@@ -11,35 +11,44 @@
       </div>
     </div>
 
-    <div class="input-area p-d-flex p-jc-between p-ai-center">
+    <div class="input-area panel">
       <input
         type="file"
         ref="fileInputRef"
         style="display: none"
         @change="handleFileSelected"
       />
-      
+
       <Button
-        icon="pi pi-paperclip"
         class="p-button-secondary file-attach-btn"
         title="Attach File (Max 25 MB)"
         @click="triggerFilePicker"
-      />
+      >
+        <Paperclip :size="16" />
+      </Button>
 
       <InputText
         ref="messageInputRef"
         v-model="textInput"
         @keyup.enter="handleSend"
         placeholder="Type a message..."
-        style="flex:1; margin: 0 12px;"
+        class="chat-text-input"
       />
-      <Button label=" Send" icon="pi pi-send" @click="handleSend" />
+
+      <Button
+        class="send-btn"
+        @click="handleSend"
+      >
+        <Send :size="16" style="margin-right: 0.375rem" />
+        Send
+      </Button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { Paperclip, Send } from '@lucide/vue';
 import { MAX_FILE_SIZE, formatFileSize } from '@/utils/fileChunker';
 
 const emit = defineEmits<{
@@ -49,7 +58,7 @@ const emit = defineEmits<{
 
 const textInput = ref('');
 const fileError = ref<string | null>(null);
-const messageInputRef = ref<any>(null);
+const messageInputRef = ref<{ $el?: HTMLInputElement; focus?: () => void } | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 let toastTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -91,7 +100,7 @@ const handleFileSelected = (event: Event) => {
   if (!file) return;
 
   if (file.size > MAX_FILE_SIZE) {
-    showFileToast(`File "${file.name}" (${formatFileSize(file.size)}) exceeds the maximum allowed size of 25 MB.`);
+    showFileToast(`File "${file.name}" (${formatFileSize(file.size)}) exceeds maximum size of 25 MB.`);
     target.value = '';
     return;
   }
@@ -129,14 +138,65 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   position: relative;
+  width: 100%;
 }
 
 .input-area {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: var(--shadow-glass);
 }
 
 .file-attach-btn {
-  margin-right: 0.25rem;
+  height: 2.375rem;
+  width: 2.375rem;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: var(--radius-md) !important;
+  flex-shrink: 0;
+}
+
+.chat-text-input {
+  flex: 1;
+  height: 2.375rem;
+  padding-left: 1.125rem !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-glass-input) !important;
+}
+
+.send-btn {
+  height: 2.375rem;
+  padding: 0 1rem !important;
+  background: var(--accent-cyan) !important;
+  border: none !important;
+  color: var(--text-inverse) !important;
+  font-weight: 700 !important;
+  flex-shrink: 0;
+  border-radius: var(--radius-md) !important;
+  transition: var(--transition-fast);
+}
+
+.send-btn:hover {
+  box-shadow: var(--shadow-glow-cyan) !important;
+  opacity: 0.95;
+}
+
+.send-btn:hover svg {
+  transform: translate(2px, -1px) scale(1.05);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.send-btn:active, .file-attach-btn:active {
+  transform: scale(0.94);
+  transition: transform 0.08s ease-in-out;
 }
 
 .toast-expand-wrapper {
@@ -160,13 +220,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #4a1818;
-  color: #ffaaaa;
-  border: 1px solid #993333;
-  border-radius: 0.375rem;
+  background: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border: 1px solid var(--alert-danger-border);
+  border-radius: var(--radius-md);
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.4);
+  backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: var(--shadow-glass);
 }
 
 .toast-message {
@@ -177,7 +238,7 @@ onUnmounted(() => {
 .toast-close-btn {
   background: transparent;
   border: none;
-  color: #ffaaaa;
+  color: var(--alert-danger-text);
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
@@ -190,7 +251,7 @@ onUnmounted(() => {
 
 .toast-close-btn:hover {
   opacity: 1;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .toast-fade-enter-active,
@@ -204,4 +265,3 @@ onUnmounted(() => {
   transform: translateY(-0.25rem);
 }
 </style>
-

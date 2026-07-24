@@ -1,0 +1,256 @@
+/* SecureChat P2P Single-Source-of-Truth Color Scheme System */
+
+:root,
+[data-theme="dark"] {
+  /* Dracula Official Color Palette Primitives */
+  --color-dracula-bg: #282a36;
+  --color-dracula-bg-rgb: 40, 42, 54;
+  --color-dracula-current-line: #44475a;
+  --color-dracula-current-line-rgb: 68, 71, 90;
+  --color-dracula-fg: #f8f8f2;
+  --color-dracula-comment: #6272a4;
+  --color-dracula-comment-rgb: 98, 114, 164;
+  --color-dracula-cyan: #8be9fd;
+  --color-dracula-cyan-rgb: 139, 233, 253;
+  --color-dracula-green: #50fa7b;
+  --color-dracula-green-rgb: 80, 250, 123;
+  --color-dracula-orange: #ffb86c;
+  --color-dracula-orange-rgb: 255, 184, 108;
+  --color-dracula-pink: #ff79c6;
+  --color-dracula-pink-rgb: 255, 121, 198;
+  --color-dracula-purple: #bd93f9;
+  --color-dracula-purple-rgb: 189, 147, 249;
+  --color-dracula-red: #ff5555;
+  --color-dracula-red-rgb: 255, 85, 85;
+  --color-dracula-yellow: #f1fa8c;
+
+  --color-overlay-dark: rgba(8, 12, 20, 0.85);
+  --color-backdrop-dark: rgba(4, 7, 13, 0.75);
+
+  /* Dracula Theme Variables */
+  --dracula-bg: var(--color-dracula-bg);
+  --dracula-current-line: var(--color-dracula-current-line);
+  --dracula-fg: var(--color-dracula-fg);
+  --dracula-comment: var(--color-dracula-comment);
+  --dracula-cyan: var(--color-dracula-cyan);
+  --dracula-green: var(--color-dracula-green);
+  --dracula-orange: var(--color-dracula-orange);
+  --dracula-pink: var(--color-dracula-pink);
+  --dracula-purple: var(--color-dracula-purple);
+  --dracula-red: var(--color-dracula-red);
+  --dracula-yellow: var(--color-dracula-yellow);
+
+  /* Semantic Canvas & Surfaces */
+  --bg-dark-root: var(--color-dracula-bg);
+  --bg-dark-surface: var(--color-dracula-bg);
+  --bg-dark-panel: var(--color-dracula-current-line);
+  --bg-glass-card: rgba(var(--color-dracula-bg-rgb), 0.9);
+  --bg-glass-card-hover: rgba(var(--color-dracula-current-line-rgb), 0.95);
+  --bg-glass-header: rgba(var(--color-dracula-bg-rgb), 0.95);
+  --bg-glass-input: var(--color-dracula-current-line);
+  --bg-overlay: var(--color-overlay-dark);
+  --bg-modal-backdrop: var(--color-backdrop-dark);
+
+  /* Primary Brand & Accents */
+  --accent-cyan: var(--color-dracula-cyan);
+  --accent-cyan-glow: rgba(var(--color-dracula-cyan-rgb), 0.35);
+  --accent-emerald: var(--color-dracula-green);
+  --accent-emerald-glow: rgba(var(--color-dracula-green-rgb), 0.35);
+  --accent-purple: var(--color-dracula-purple);
+  --accent-purple-glow: rgba(var(--color-dracula-purple-rgb), 0.35);
+  --accent-pink: var(--color-dracula-pink);
+  --accent-amber: var(--color-dracula-orange);
+  --accent-rose: var(--color-dracula-red);
+  --accent-yellow: var(--color-dracula-yellow);
+
+  /* Typography */
+  --text-primary: var(--color-dracula-fg);
+  --text-secondary: var(--color-dracula-comment);
+  --text-muted: var(--color-dracula-comment);
+  --text-cyber: var(--color-dracula-cyan);
+  --text-inverse: var(--color-dracula-bg);
+
+  /* Component Surfaces & Controls */
+  --bubble-bg: rgba(var(--color-dracula-current-line-rgb), 0.6);
+  --bubble-border: var(--border-subtle);
+  --bubble-undecrypted-bg: rgba(var(--color-dracula-red-rgb), 0.12);
+  --bubble-undecrypted-border: rgba(var(--color-dracula-red-rgb), 0.4);
+  --bubble-undecrypted-text: var(--color-dracula-pink);
+
+  --alert-danger-bg: rgba(var(--color-dracula-red-rgb), 0.15);
+  --alert-danger-border: rgba(var(--color-dracula-red-rgb), 0.4);
+  --alert-danger-text: var(--color-dracula-pink);
+
+  --alert-warning-bg: rgba(var(--color-dracula-orange-rgb), 0.15);
+  --alert-warning-border: rgba(var(--color-dracula-orange-rgb), 0.4);
+  --alert-warning-text: var(--color-dracula-yellow);
+
+  --badge-system-bg: rgba(var(--color-dracula-purple-rgb), 0.2);
+  --badge-system-text: var(--color-dracula-purple);
+  --system-avatar-bg: linear-gradient(135deg, rgba(var(--color-dracula-purple-rgb), 0.25), rgba(var(--color-dracula-cyan-rgb), 0.25));
+  --system-avatar-border: rgba(var(--color-dracula-purple-rgb), 0.4);
+
+  --avatar-default-bg: linear-gradient(135deg, rgba(var(--color-dracula-cyan-rgb), 0.2), rgba(var(--color-dracula-purple-rgb), 0.2));
+  --avatar-default-border: var(--accent-cyan-glow);
+
+  --card-system-bg: rgba(var(--color-dracula-purple-rgb), 0.08);
+  --card-system-border: rgba(var(--color-dracula-purple-rgb), 0.25);
+
+  --pill-encrypted-bg: rgba(var(--color-dracula-cyan-rgb), 0.15);
+  --pill-encrypted-border: rgba(var(--color-dracula-cyan-rgb), 0.35);
+  --pill-encrypted-text: var(--color-dracula-cyan);
+
+  --pill-plaintext-bg: rgba(var(--color-dracula-orange-rgb), 0.15);
+  --pill-plaintext-border: rgba(var(--color-dracula-orange-rgb), 0.35);
+  --pill-plaintext-text: var(--color-dracula-orange);
+
+  --btn-secondary-bg: var(--color-dracula-current-line);
+  --btn-secondary-hover-bg: rgba(var(--color-dracula-current-line-rgb), 0.95);
+  --btn-secondary-text: var(--color-dracula-fg);
+  --btn-secondary-border: var(--border-subtle);
+
+  --btn-send-gradient: linear-gradient(135deg, var(--color-dracula-cyan), var(--color-dracula-purple));
+  --btn-send-text: var(--color-dracula-bg);
+
+  --terminal-bg: var(--color-dracula-bg);
+  --terminal-header-bg: rgba(var(--color-dracula-bg-rgb), 0.95);
+  --terminal-border: var(--border-subtle);
+
+  --checkbox-box-bg: var(--color-dracula-current-line);
+  --checkbox-check-icon: var(--color-dracula-fg);
+
+  /* Borders & Dividers */
+  --border-subtle: rgba(var(--color-dracula-comment-rgb), 0.4);
+  --border-glow: rgba(var(--color-dracula-cyan-rgb), 0.4);
+  --border-active: rgba(var(--color-dracula-green-rgb), 0.5);
+
+  /* Shadows & Effects */
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --shadow-glow-cyan: 0 0 15px rgba(var(--color-dracula-cyan-rgb), 0.25);
+  --shadow-glow-emerald: 0 0 15px rgba(var(--color-dracula-green-rgb), 0.25);
+  --glass-backdrop-filter: blur(12px) saturate(180%);
+}
+
+[data-theme="light"] {
+  /* Clean Crisp Light Spectrum Primitives */
+  --color-light-bg: #f8fafc;
+  --color-light-surface: #ffffff;
+  --color-light-panel: #f1f5f9;
+  --color-light-panel-hover: #e2e8f0;
+  --color-light-border: #cbd5e1;
+  --color-light-fg: #0f172a;
+  --color-light-subtext: #334155;
+  --color-light-muted: #64748b;
+  --color-light-cyan: #0284c7;
+  --color-light-cyan-rgb: 2, 132, 199;
+  --color-light-emerald: #059669;
+  --color-light-emerald-rgb: 5, 150, 105;
+  --color-light-purple: #6d28d9;
+  --color-light-purple-rgb: 109, 40, 217;
+  --color-light-pink: #db2777;
+  --color-light-amber: #d97706;
+  --color-light-rose: #e11d48;
+  --color-light-yellow: #ca8a04;
+
+  --color-light-undecrypted-bg: #fff1f2;
+  --color-light-undecrypted-border: #fecdd3;
+  --color-light-encrypted-bg: #e0f2fe;
+  --color-light-encrypted-border: #7dd3fc;
+  --color-light-encrypted-text: #0369a1;
+  --color-light-plaintext-bg: #fef3c7;
+  --color-light-plaintext-border: #fcd34d;
+  --color-light-plaintext-text: #b45309;
+
+  --color-overlay-light: rgba(248, 250, 252, 0.9);
+  --color-backdrop-light: rgba(15, 23, 42, 0.4);
+
+  /* Semantic Canvas & Surfaces */
+  --bg-dark-root: var(--color-light-bg);
+  --bg-dark-surface: var(--color-light-surface);
+  --bg-dark-panel: var(--color-light-panel);
+  --bg-glass-card: var(--color-light-surface);
+  --bg-glass-card-hover: var(--color-light-bg);
+  --bg-glass-header: var(--color-light-surface);
+  --bg-glass-input: var(--color-light-surface);
+  --bg-overlay: var(--color-overlay-light);
+  --bg-modal-backdrop: var(--color-backdrop-light);
+
+  /* Primary Brand & Accents */
+  --accent-cyan: var(--color-light-cyan);
+  --accent-cyan-glow: rgba(var(--color-light-cyan-rgb), 0.25);
+  --accent-emerald: var(--color-light-emerald);
+  --accent-emerald-glow: rgba(var(--color-light-emerald-rgb), 0.25);
+  --accent-purple: var(--color-light-purple);
+  --accent-purple-glow: rgba(var(--color-light-purple-rgb), 0.25);
+  --accent-pink: var(--color-light-pink);
+  --accent-amber: var(--color-light-amber);
+  --accent-rose: var(--color-light-rose);
+  --accent-yellow: var(--color-light-yellow);
+
+  /* Typography */
+  --text-primary: var(--color-light-fg);
+  --text-secondary: var(--color-light-subtext);
+  --text-muted: var(--color-light-muted);
+  --text-cyber: var(--color-light-cyan);
+  --text-inverse: var(--color-light-surface);
+
+  /* Component Surfaces & Controls */
+  --bubble-bg: var(--color-light-surface);
+  --bubble-border: var(--color-light-panel-hover);
+  --bubble-undecrypted-bg: var(--color-light-undecrypted-bg);
+  --bubble-undecrypted-border: var(--color-light-undecrypted-border);
+  --bubble-undecrypted-text: var(--color-light-rose);
+
+  --alert-danger-bg: #fff1f2;
+  --alert-danger-border: #fecdd3;
+  --alert-danger-text: #e11d48;
+
+  --alert-warning-bg: #fef3c7;
+  --alert-warning-border: #fcd34d;
+  --alert-warning-text: #b45309;
+
+  --badge-system-bg: #f3e8ff;
+  --badge-system-text: #6d28d9;
+  --system-avatar-bg: linear-gradient(135deg, #f3e8ff, #e0f2fe);
+  --system-avatar-border: #c084fc;
+
+  --avatar-default-bg: linear-gradient(135deg, #e0f2fe, #f3e8ff);
+  --avatar-default-border: #7dd3fc;
+
+  --card-system-bg: #faf5ff;
+  --card-system-border: #e9d5ff;
+
+  --pill-encrypted-bg: var(--color-light-encrypted-bg);
+  --pill-encrypted-border: var(--color-light-encrypted-border);
+  --pill-encrypted-text: var(--color-light-encrypted-text);
+
+  --pill-plaintext-bg: var(--color-light-plaintext-bg);
+  --pill-plaintext-border: var(--color-light-plaintext-border);
+  --pill-plaintext-text: var(--color-light-plaintext-text);
+
+  --btn-secondary-bg: var(--color-light-panel);
+  --btn-secondary-hover-bg: var(--color-light-panel-hover);
+  --btn-secondary-text: var(--color-light-subtext);
+  --btn-secondary-border: var(--color-light-border);
+
+  --btn-send-gradient: linear-gradient(135deg, var(--color-light-cyan), var(--color-light-purple));
+  --btn-send-text: var(--color-light-surface);
+
+  --terminal-bg: var(--color-light-panel);
+  --terminal-header-bg: var(--color-light-bg);
+  --terminal-border: var(--color-light-border);
+
+  --checkbox-box-bg: var(--color-light-surface);
+  --checkbox-check-icon: var(--color-light-fg);
+
+  /* Borders & Dividers */
+  --border-subtle: var(--color-light-border);
+  --border-glow: rgba(var(--color-light-cyan-rgb), 0.35);
+  --border-active: rgba(var(--color-light-emerald-rgb), 0.5);
+
+  /* Shadows & Effects */
+  --shadow-glass: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --shadow-glow-cyan: 0 0 12px rgba(var(--color-light-cyan-rgb), 0.25);
+  --shadow-glow-emerald: 0 0 12px rgba(var(--color-light-emerald-rgb), 0.25);
+  --glass-backdrop-filter: blur(12px) saturate(180%);
+}

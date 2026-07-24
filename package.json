@@ -15,7 +15,9 @@
     "docker:sync": "node docker-sync-env.mjs",
     "docker:up": "npm run docker:sync && docker compose up --build",
     "docker:export": "npm run docker:sync && node docker-export.mjs",
+    "deploy:server": "node deploy-pi.mjs",
     "deploy:pi": "node deploy-pi.mjs",
+    "server:update": "sh pi/update-containers.sh",
     "pi:update": "sh pi/update-containers.sh"
   },
   "repository": {
@@ -31,7 +33,8 @@
   },
   "homepage": "https://github.com/Aaron-Massey/SecureChat#readme",
   "devDependencies": {
-    "concurrently": "^10.0.3"
+    "concurrently": "^10.0.3",
+    "typescript": "~5.8.0"
   },
   "dependencies": {
     "socket.io-client": "^4.8.3",

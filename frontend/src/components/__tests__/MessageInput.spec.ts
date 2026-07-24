@@ -17,7 +17,7 @@ describe('MessageInput', () => {
 
     expect(wrapper.find('input[type="file"]').exists()).toBe(true);
     expect(wrapper.findComponent(InputText).exists()).toBe(true);
-    expect(wrapper.findAllComponents(Button).length).toBe(2); // Attach button & Send button
+    expect(wrapper.findAllComponents(Button).length).toBe(2);
   });
 
   it('emits send event with input text and clears input on send', async () => {
@@ -95,6 +95,6 @@ describe('MessageInput', () => {
     await fileInput.trigger('change');
 
     expect(wrapper.emitted('sendFile')).toBeFalsy();
-    expect(wrapper.text()).toContain('exceeds the maximum allowed size of 25 MB');
+    expect(wrapper.text()).toContain('exceeds maximum size of 25 MB');
   });
 });

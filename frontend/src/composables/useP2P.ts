@@ -1,4 +1,4 @@
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, getCurrentInstance } from 'vue';
 import type { SecurePayload, FileMetadata } from '@shared/types/payload';
 import { useCryptoStore } from '@/stores/crypto';
 import { P2PManager, type ConnectionStatus } from '@/services/p2pManager';
@@ -20,6 +20,7 @@ export interface ChatMessage {
   text?: string;
   decrypted: boolean;
   timestamp: string;
+  isSystem?: boolean;
   fileAttachment?: {
     fileId: string;
     fileName: string;
@@ -185,6 +186,7 @@ export function useP2P() {
       sender: 'System',
       text: 'Encryption keys have been rotated.',
       decrypted: true,
+      isSystem: true,
       timestamp: new Date().toLocaleTimeString()
     });
   };
@@ -201,6 +203,7 @@ export function useP2P() {
         sender: 'System',
         text: connectionDetail.value,
         decrypted: true,
+        isSystem: true,
         timestamp: new Date().toLocaleTimeString()
       });
     }
@@ -344,9 +347,11 @@ export function useP2P() {
     debugHistory.value.push(headerPayload);
   };
 
-  onUnmounted(() => {
-    p2pManager.destroy();
-  });
+  if (getCurrentInstance()) {
+    onUnmounted(() => {
+      p2pManager.destroy();
+    });
+  }
 
   return { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus, connectionDetail };
 }

@@ -1,19 +1,311 @@
 @import './base.css';
 
 #app {
-  font-weight: normal;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-sans);
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+/* Glassmorphic Panel Helper */
+.glass-panel {
+  background: var(--bg-glass-card);
+  backdrop-filter: var(--glass-backdrop-filter);
+  -webkit-backdrop-filter: var(--glass-backdrop-filter);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+/* PrimeVue Component Overrides */
+.p-inputtext {
+  background: var(--bg-glass-input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.875rem !important;
+  transition: var(--transition-fast) !important;
+}
+
+.p-inputtext:hover {
+  border-color: var(--accent-cyan-glow) !important;
+}
+
+.p-inputtext:focus {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 10px var(--accent-cyan-glow) !important;
+  outline: none !important;
+}
+
+.p-button {
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+  font-family: var(--font-sans) !important;
+  transition: var(--transition-fast) !important;
+}
+
+.p-button.p-button-secondary {
+  background: var(--btn-secondary-bg) !important;
+  border: 1px solid var(--btn-secondary-border) !important;
+  color: var(--btn-secondary-text) !important;
+}
+
+.p-button.p-button-secondary:hover {
+  background: var(--btn-secondary-hover-bg) !important;
+  color: var(--accent-cyan) !important;
+  border-color: var(--accent-cyan-glow) !important;
+}
+
+.p-dropdown {
+  background: var(--bg-glass-input) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+}
+
+.p-dropdown .p-dropdown-label {
+  color: var(--text-primary) !important;
+  font-size: 0.85rem !important;
+}
+
+.p-dropdown-panel {
+  background: var(--bg-dark-panel) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-glass) !important;
+}
+
+.p-dropdown-item {
+  color: var(--text-primary) !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.85rem !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.p-dropdown-item:hover, .p-dropdown-item.p-highlight {
+  background: var(--accent-cyan-glow) !important;
+  color: var(--accent-cyan) !important;
+}
+
+/* Checkbox Cyber Styling */
+.p-checkbox {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+.p-checkbox .p-checkbox-box {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  background: var(--checkbox-box-bg) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-xs) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: var(--transition-fast) !important;
+}
+
+.p-checkbox .p-checkbox-box.p-highlight {
+  background: var(--accent-cyan) !important;
+  border-color: var(--accent-cyan) !important;
+}
+
+.p-checkbox .p-checkbox-box .p-checkbox-icon {
+  color: var(--checkbox-check-icon) !important;
+  font-family: 'primeicons' !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  display: inline-block !important;
+}
+
+/* Component Surface References */
+.bubble-card {
+  background: var(--bubble-bg) !important;
+  border-color: var(--bubble-border) !important;
+  box-shadow: var(--shadow-glass) !important;
+}
+
+.undecrypted .bubble-card {
+  background: var(--bubble-undecrypted-bg) !important;
+  border-color: var(--bubble-undecrypted-border) !important;
+}
+
+.plaintext-mode {
+  background: var(--pill-plaintext-bg) !important;
+  color: var(--pill-plaintext-text) !important;
+  border-color: var(--pill-plaintext-border) !important;
+}
+
+.encrypted-mode {
+  background: var(--pill-encrypted-bg) !important;
+  color: var(--pill-encrypted-text) !important;
+  border-color: var(--pill-encrypted-border) !important;
+}
+
+.encrypted-pill {
+  background: var(--pill-encrypted-bg) !important;
+  color: var(--pill-encrypted-text) !important;
+  border-color: var(--pill-encrypted-border) !important;
+}
+
+.plaintext-pill {
+  background: var(--pill-plaintext-bg) !important;
+  color: var(--pill-plaintext-text) !important;
+  border-color: var(--pill-plaintext-border) !important;
+}
+
+.send-btn {
+  background: var(--btn-send-gradient) !important;
+  color: var(--btn-send-text) !important;
+}
+
+.brand-icon {
+  color: var(--text-inverse) !important;
+}
+
+.layout-btn.active {
+  background: var(--accent-cyan) !important;
+  color: var(--text-inverse) !important;
+}
+
+.settings-toggle-btn {
+  background: var(--btn-secondary-bg) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Cipher Terminal Theme Styling */
+.debug-pane {
+  background: var(--bg-dark-surface) !important;
+  border-color: var(--terminal-border) !important;
+  box-shadow: var(--shadow-glass) !important;
+}
+
+.terminal-header {
+  background: var(--terminal-header-bg) !important;
+  border-bottom-color: var(--border-subtle) !important;
+}
+
+.terminal-title {
+  color: var(--accent-cyan) !important;
+}
+
+.terminal-feed {
+  background: var(--terminal-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+.empty-terminal {
+  color: var(--text-muted) !important;
+}
+
+.payload-card {
+  background: var(--bg-glass-card) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.encrypted-card {
+  border-left-color: var(--accent-cyan) !important;
+}
+
+.plaintext-card {
+  border-left-color: var(--accent-amber) !important;
+}
+
+.field-label {
+  color: var(--text-secondary) !important;
+}
+
+.field-val {
+  color: var(--text-primary) !important;
+}
+
+.iv-val { color: var(--accent-purple) !important; }
+.hmac-val { color: var(--accent-emerald) !important; }
+.ciphertext-val { color: var(--accent-cyan) !important; }
+.plaintext-val { color: var(--accent-amber) !important; }
+
+/* PrimeVue Tooltip Custom Styling */
+.p-tooltip .p-tooltip-text {
+  background: var(--bg-dark-panel) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.775rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: var(--glass-backdrop-filter) !important;
+}
+
+.p-tooltip.p-tooltip-top .p-tooltip-arrow {
+  border-top-color: var(--border-subtle) !important;
+}
+
+.p-tooltip.p-tooltip-bottom .p-tooltip-arrow {
+  border-bottom-color: var(--border-subtle) !important;
+}
+
+.p-tooltip.p-tooltip-left .p-tooltip-arrow {
+  border-left-color: var(--border-subtle) !important;
+}
+
+.p-tooltip.p-tooltip-right .p-tooltip-arrow {
+  border-right-color: var(--border-subtle) !important;
+}
+
+/* Lock Bounce Transition Keyframes */
+@keyframes lock-bounce {
+  0% {
+    transform: scale(0.85) translateY(3px);
+    opacity: 0.5;
   }
+  35% {
+    transform: scale(1.18) translateY(-2.5px);
+    opacity: 1;
+  }
+  65% {
+    transform: scale(0.94) translateY(1px);
+  }
+  85% {
+    transform: scale(1.04) translateY(-0.5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.bounce-lock {
+  display: inline-block;
+  animation: lock-bounce 0.45s ease-out;
+}
+
+/* Unlock Shake Keyframes for Encrypted -> Unencrypted Transition */
+@keyframes lock-unlock-shake {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-30deg) scale(1.25);
+  }
+  50% {
+    transform: rotate(18deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.unlock-shake {
+  display: inline-block;
+  animation: lock-unlock-shake 0.65s cubic-bezier(0.36, 0, 0.66, -0.56);
 }

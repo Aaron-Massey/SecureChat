@@ -52,7 +52,7 @@ describe('fileChunker utility', () => {
   it('throws an error if file size exceeds MAX_FILE_SIZE', async () => {
     const oversizedFile = {
       size: MAX_FILE_SIZE + 1024,
-      slice: vi.fn()
+      slice: vi.fn<(start?: number, end?: number) => Blob>()
     } as unknown as File;
 
     await expect(sliceFileIntoChunks(oversizedFile)).rejects.toThrow(/exceeds maximum allowed size/);

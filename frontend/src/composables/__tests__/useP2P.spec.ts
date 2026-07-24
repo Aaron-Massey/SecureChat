@@ -4,18 +4,18 @@ import { useP2P } from '../useP2P';
 import { useCryptoStore } from '@/stores/crypto';
 
 vi.mock('socket.io-client', () => {
-  const listeners: Record<string, Function> = {};
-  const ioListeners: Record<string, Function> = {};
+  const listeners: Record<string, (...args: unknown[]) => void> = {};
+  const ioListeners: Record<string, (...args: unknown[]) => void> = {};
 
   return {
-    io: vi.fn(() => ({
-      on: (event: string, fn: Function) => {
+    io: vi.fn<() => unknown>(() => ({
+      on: (event: string, fn: (...args: unknown[]) => void) => {
         listeners[event] = fn;
       },
-      emit: vi.fn(),
-      disconnect: vi.fn(),
+      emit: vi.fn<(...args: unknown[]) => void>(),
+      disconnect: vi.fn<() => void>(),
       io: {
-        on: (event: string, fn: Function) => {
+        on: (event: string, fn: (...args: unknown[]) => void) => {
           ioListeners[event] = fn;
         }
       },
@@ -26,10 +26,10 @@ vi.mock('socket.io-client', () => {
 });
 
 if (typeof URL.createObjectURL !== 'function') {
-  URL.createObjectURL = vi.fn(() => 'blob:http://localhost/dummy-file');
+  URL.createObjectURL = vi.fn<() => string>(() => 'blob:http://localhost/dummy-file');
 }
 if (typeof URL.revokeObjectURL !== 'function') {
-  URL.revokeObjectURL = vi.fn();
+  URL.revokeObjectURL = vi.fn<() => void>();
 }
 
 describe('useP2P File Transfer & Key Verification', () => {
@@ -46,8 +46,8 @@ describe('useP2P File Transfer & Key Verification', () => {
 
     sendP2PMessage('Hello World', 'Alice');
     expect(chatHistory.value.length).toBe(1);
-    expect(chatHistory.value[0].text).toBe('Hello World');
-    expect(chatHistory.value[0].decrypted).toBe(true);
+    expect(chatHistory.value[0]!.text).toBe('Hello World');
+    expect(chatHistory.value[0]!.decrypted).toBe(true);
   });
 
   it('handles encrypted file transfer complete callback with valid key', () => {

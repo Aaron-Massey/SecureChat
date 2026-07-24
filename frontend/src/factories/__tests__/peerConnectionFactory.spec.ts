@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { PeerConnectionFactory } from '../peerConnectionFactory';
-import { ConfigurableIceStrategy, DefaultIceStrategy } from '@/strategies/iceServerStrategy';
+import { ConfigurableIceStrategy } from '@/strategies/iceServerStrategy';
 
-describe('PeerConnectionFactory (GOF Factory Method Pattern)', () => {
+describe('PeerConnectionFactory', () => {
   it('instantiates PeerConnectionFactory with default strategy', () => {
     const factory = new PeerConnectionFactory();
     expect(factory).toBeDefined();

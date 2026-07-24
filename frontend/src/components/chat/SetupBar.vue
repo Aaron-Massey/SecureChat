@@ -1,40 +1,57 @@
 <template>
-  <div class="setup-bar p-fluid p-formgrid p-grid">
-    <div class="p-field p-col">
-      <InputText
-        :model-value="displayName"
-        @update:model-value="$emit('update:displayName', $event)"
-        placeholder="Display Name"
-        @input="$emit('inputStarted')"
-      />
-    </div>
-    <div class="p-field p-col">
-      <InputText
-        :model-value="passwordInput"
-        @update:model-value="$emit('update:passwordInput', $event)"
-        placeholder="Shared Passphrase"
-        @keydown.enter="$emit('setupFinalized')"
-        @blur="$emit('setupFinalized')"
-        @input="$emit('inputStarted')"
-      />
-    </div>
-    <div class="p-field p-col-2">
-      <Dropdown
-        :model-value="activeBitLength"
-        @update:model-value="$emit('update:activeBitLength', $event)"
-        :options="cipherOptions"
-        optionLabel="label"
-        optionValue="value"
-      />
+  <div class="setup-container">
+    <div class="setup-bar panel" :class="{ 'compact-mode': compact }">
+      <div class="field-group">
+        <div class="input-wrapper">
+          <User class="input-icon" :size="16" />
+          <InputText
+            :model-value="displayName"
+            @update:model-value="$emit('update:displayName', $event ?? '')"
+            placeholder="Display Name"
+            class="input-field"
+            @input="$emit('inputStarted')"
+          />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="input-wrapper">
+          <Lock class="input-icon" :size="16" />
+          <InputText
+            :model-value="passwordInput"
+            @update:model-value="$emit('update:passwordInput', $event ?? '')"
+            type="text"
+            placeholder="Passphrase (optional)"
+            class="input-field"
+            @keydown.enter="$emit('setupFinalized')"
+            @blur="$emit('setupFinalized')"
+            @input="$emit('inputStarted')"
+          />
+        </div>
+      </div>
+
+      <div class="field-group cipher-select-group">
+        <Dropdown
+          :model-value="activeBitLength"
+          @update:model-value="$emit('update:activeBitLength', $event); $emit('setupFinalized')"
+          :options="cipherOptions"
+          optionLabel="label"
+          optionValue="value"
+          class="dropdown-field"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { User, Lock } from '@lucide/vue';
+
 defineProps<{
   displayName: string;
   passwordInput: string;
   activeBitLength: 128 | 56;
+  compact?: boolean;
 }>();
 
 defineEmits<{
@@ -46,40 +63,115 @@ defineEmits<{
 }>();
 
 const cipherOptions = [
-  { label: 'AES (128-bit)', value: 128 },
-  { label: 'DES (56-bit)', value: 56 }
+  { label: 'AES-128', value: 128 },
+  { label: 'DES-56', value: 56 }
 ];
 </script>
 
 <style scoped>
+.setup-container {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
 .setup-bar {
   display: flex;
   align-items: center;
-  margin-bottom: 0.625rem;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: var(--shadow-glass);
 }
 
-.setup-bar input,
-.setup-bar select,
-.setup-bar button {
-  margin-right: 0.625rem;
+.field-group {
+  flex: 1;
+  min-width: 0;
 }
 
-:deep(.p-inputtext),
-:deep(.p-dropdown) {
-  height: 2.375rem;
-  box-sizing: border-box;
+.cipher-select-group {
+  flex: 0 0 160px;
 }
 
-:deep(.p-dropdown) {
-  display: inline-flex;
-  align-items: center;
-}
-
-:deep(.p-dropdown .p-dropdown-label) {
+.input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  padding-top: 0;
-  padding-bottom: 0;
-  height: 100%;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--accent-cyan);
+  font-size: 0.9rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+:deep(.input-field) {
+  width: 100%;
+  padding-left: 2.25rem !important;
+  background: var(--bg-glass-input) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  height: 2.375rem;
+}
+
+:deep(.input-field:focus) {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 10px var(--accent-cyan-glow) !important;
+}
+
+:deep(.dropdown-field) {
+  width: 100%;
+  height: 2.375rem;
+  background: var(--bg-glass-input) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+:deep(.dropdown-field .p-dropdown-label) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.apply-btn {
+  background: var(--btn-secondary-bg) !important;
+  border: 1px solid var(--accent-cyan) !important;
+  color: var(--text-primary) !important;
+  font-size: 0.85rem !important;
+  white-space: nowrap;
+  height: 2.375rem;
+}
+
+.apply-btn:hover {
+  background: var(--btn-secondary-hover-bg) !important;
+  box-shadow: var(--shadow-glow-cyan) !important;
+}
+
+/* Compact / Mobile view stacking */
+.compact-mode {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.compact-mode .cipher-select-group {
+  flex: auto;
+}
+
+@media (max-width: 640px) {
+  .setup-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cipher-select-group {
+    flex: auto;
+  }
 }
 </style>

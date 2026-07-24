@@ -68,7 +68,7 @@ export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
  */
 export const computeBufferHash = (buffer: ArrayBuffer): string => {
   const bytes = new Uint8Array(buffer);
-  const wordArray = CryptoJS.lib.WordArray.create(bytes as any);
+  const wordArray = CryptoJS.lib.WordArray.create(Array.from(bytes));
   return CryptoJS.SHA256(wordArray).toString();
 };
 

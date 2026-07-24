@@ -1,9 +1,8 @@
 <template>
   <div class="media-attachment-card">
-    <!-- Active File Transfer Progress -->
     <div v-if="isTransferring" class="transfer-progress">
       <div class="transfer-header">
-        <span class="file-icon">📥</span>
+        <Download class="transfer-icon" :size="16" />
         <span class="file-name" :title="fileName">{{ fileName }}</span>
         <span class="file-size">({{ formattedSize }})</span>
       </div>
@@ -13,11 +12,8 @@
       <span class="progress-percentage">Receiving {{ progress }}%</span>
     </div>
 
-    <!-- Completed Transfer Display -->
     <template v-else>
-      <!-- Image / Video Click-to-View Media -->
       <div v-if="isMedia" class="media-preview-wrapper">
-        <!-- Unrevealed State (Click to View Overlay) -->
         <div v-if="!isRevealed" class="media-overlay">
           <div class="media-meta">
             <span class="media-type-badge">{{ isImage ? 'IMAGE' : 'VIDEO' }}</span>
@@ -25,17 +21,20 @@
             <span class="media-file-size">({{ formattedSize }})</span>
           </div>
           <button @click="toggleReveal" class="reveal-button">
-            👁️ Click to View {{ isImage ? 'Image' : 'Video' }}
+            <Eye :size="14" /> Preview {{ isImage ? 'Image' : 'Video' }}
           </button>
         </div>
 
-        <!-- Revealed State -->
         <div v-else class="revealed-media-container">
           <div class="media-toolbar">
             <span class="media-file-name">{{ fileName }}</span>
             <div class="toolbar-actions">
-              <a :href="mediaUrl" :download="fileName" class="download-link" title="Download File">💾 Download</a>
-              <button @click="toggleReveal" class="hide-button" title="Hide Media">🙈 Hide</button>
+              <a :href="mediaUrl" :download="fileName" class="download-link" title="Download File">
+                <Download :size="14" /> Save
+              </a>
+              <button @click="toggleReveal" class="hide-button" title="Hide Media">
+                <EyeOff :size="14" /> Hide
+              </button>
             </div>
           </div>
 
@@ -49,17 +48,16 @@
         </div>
       </div>
 
-      <!-- Generic Non-Media File Download Card -->
       <div v-else class="generic-file-card">
         <div class="file-details">
-          <span class="file-type-icon">📄</span>
+          <FileText class="file-type-icon" :size="20" />
           <div class="file-info">
             <span class="file-title" :title="fileName">{{ fileName }}</span>
             <span class="file-meta">{{ formattedSize }} • {{ mimeType || 'Unknown format' }}</span>
           </div>
         </div>
         <a :href="mediaUrl" :download="fileName" class="download-button">
-          ⬇️ Download
+          <Download :size="14" /> Download
         </a>
       </div>
     </template>
@@ -68,6 +66,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
+import { Download, Eye, EyeOff, FileText } from '@lucide/vue';
 import { formatFileSize, revokeObjectUrl } from '@/utils/fileChunker';
 
 const props = withDefaults(
@@ -111,12 +110,13 @@ onUnmounted(() => {
 <style scoped>
 .media-attachment-card {
   margin-top: 0.5rem;
-  background-color: #2a2a2a;
-  border: 1px solid #3a3a3a;
-  border-radius: 0.5rem;
-  padding: 0.625rem;
+  background: var(--bg-dark-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.625rem 0.75rem;
   max-width: 100%;
   box-sizing: border-box;
+  backdrop-filter: var(--glass-backdrop-filter);
 }
 
 .transfer-progress {
@@ -124,39 +124,44 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 0.375rem;
   font-size: 0.85rem;
-  color: #ccc;
+  color: var(--text-secondary);
 }
 
 .transfer-header {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.transfer-icon {
+  color: var(--accent-cyan);
+}
+
 .progress-bar-track {
   height: 0.375rem;
-  background-color: #444;
-  border-radius: 0.2rem;
+  background-color: var(--bg-dark-panel);
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background-color: #00ff00;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald));
   transition: width 0.2s ease-in-out;
+  box-shadow: 0 0 8px var(--accent-cyan-glow);
 }
 
 .progress-percentage {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
   align-self: flex-end;
 }
 
 .media-preview-wrapper {
-  border-radius: 0.375rem;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -165,10 +170,10 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.25rem 0.625rem;
-  background-color: #1f1f1f;
-  border: 1px dashed #444;
-  border-radius: 0.375rem;
+  padding: 1rem 0.75rem;
+  background: var(--bg-glass-input);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
   gap: 0.625rem;
 }
 
@@ -177,31 +182,37 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
-  color: #aaa;
+  color: var(--text-secondary);
 }
 
 .media-type-badge {
-  background-color: #333;
-  color: #00ff00;
+  background: var(--pill-encrypted-bg);
+  color: var(--pill-encrypted-text);
+  border: 1px solid var(--pill-encrypted-border);
   padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-xs);
   font-size: 0.7rem;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .reveal-button {
-  background-color: #00ff00;
-  color: #000;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: var(--btn-secondary-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-cyan);
+  padding: 0.4rem 0.875rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: var(--transition-fast);
 }
 
 .reveal-button:hover {
-  background-color: #00cc00;
+  background: var(--btn-secondary-hover-bg);
+  box-shadow: var(--shadow-glow-cyan);
 }
 
 .revealed-media-container {
@@ -215,20 +226,23 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   font-size: 0.8rem;
-  color: #aaa;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid #333;
+  color: var(--text-secondary);
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .toolbar-actions {
   display: flex;
-  gap: 0.625rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
 .download-link {
-  color: #00ff00;
+  color: var(--accent-cyan);
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .download-link:hover {
@@ -238,16 +252,19 @@ onUnmounted(() => {
 .hide-button {
   background: transparent;
   border: none;
-  color: #ff5555;
+  color: var(--accent-rose);
   cursor: pointer;
   font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .embedded-image,
 .embedded-video {
   max-width: 100%;
-  max-height: 22rem;
-  border-radius: 0.25rem;
+  max-height: 20rem;
+  border-radius: var(--radius-md);
   display: block;
 }
 
@@ -266,7 +283,8 @@ onUnmounted(() => {
 }
 
 .file-type-icon {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
+  color: var(--accent-cyan);
 }
 
 .file-info {
@@ -276,9 +294,9 @@ onUnmounted(() => {
 }
 
 .file-title {
-  font-weight: bold;
-  color: #fff;
-  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.875rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -286,31 +304,35 @@ onUnmounted(() => {
 
 .file-meta {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .download-button {
-  background-color: #333;
-  color: #00ff00;
-  border: 1px solid #00ff00;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: var(--pill-encrypted-bg);
+  color: var(--accent-cyan);
+  border: 1px solid var(--pill-encrypted-border);
   padding: 0.375rem 0.75rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-md);
   text-decoration: none;
   font-size: 0.8rem;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: var(--transition-fast);
 }
 
 .download-button:hover {
-  background-color: #00ff00;
-  color: #000;
+  background: var(--accent-cyan);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-glow-cyan);
 }
 
 .media-error-box {
-  background-color: #3a2222;
-  color: #ffaaaa;
-  border: 1px solid #773333;
-  border-radius: 0.25rem;
+  background: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border: 1px solid var(--alert-danger-border);
+  border-radius: var(--radius-md);
   padding: 0.625rem;
   font-size: 0.85rem;
 }

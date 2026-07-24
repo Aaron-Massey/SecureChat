@@ -1,26 +1,41 @@
 <template>
   <div class="banner-wrapper">
     <div v-if="connectionStatus === 'reconnecting'" class="mode-banner reconnecting-mode" role="status" aria-live="polite">
-      <strong>Network Warning: Reconnecting...</strong>
-      <span>Connection lost. Automatically attempting to reconnect...</span>
+      <div class="banner-header">
+        <RefreshCw class="banner-icon" :size="16" />
+        <strong>Signaling Reconnecting...</strong>
+      </div>
+      <span class="banner-subtext">Connection interrupted. Re-establishing connection...</span>
     </div>
+
     <div v-else-if="connectionStatus === 'disconnected'" class="mode-banner disconnected-mode" role="status" aria-live="polite">
-      <strong>Network Disconnected</strong>
-      <span>Unable to reach signaling server. Please check your network.</span>
+      <div class="banner-header">
+        <AlertTriangle class="banner-icon" :size="16" />
+        <strong>Network Disconnected</strong>
+      </div>
+      <span class="banner-subtext">Signaling server unreachable. Retrying automatically...</span>
     </div>
 
     <div v-if="!isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite">
-      <strong>Plaintext mode enabled.</strong>
-      <span>Outgoing messages will be sent without encryption.</span>
+      <div class="banner-header">
+        <ShieldAlert class="banner-icon" :size="16" />
+        <strong>Plaintext Mode Active</strong>
+      </div>
+      <span class="banner-subtext">Messages sent unencrypted. Enter a passphrase to encrypt.</span>
     </div>
+
     <div v-else class="mode-banner encrypted-mode" role="status" aria-live="polite">
-      <strong>Encrypted mode enabled.</strong>
-      <span>Outgoing messages will be protected with the selected cipher.</span>
+      <div class="banner-header">
+        <Shield class="banner-icon" :size="16" />
+        <strong>End-to-End Encryption Enabled</strong>
+      </div>
+      <span class="banner-subtext">Messages and file transfers are encrypted.</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { RefreshCw, AlertTriangle, ShieldAlert, Shield } from '@lucide/vue';
 import type { ConnectionStatus } from '@/services/p2pManager';
 
 defineProps<{
@@ -36,36 +51,64 @@ defineProps<{
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
+
 .mode-banner {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 0.625rem 0.75rem;
-  border-radius: 0.375rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
-  line-height: 1.4;
+  font-size: 0.825rem;
+  backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-fast);
 }
-.mode-banner strong {
-  letter-spacing: 0.05em;
+
+.banner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+
+.banner-header strong {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.banner-icon {
+  font-size: 0.95rem;
+}
+
+.banner-subtext {
+  font-size: 0.775rem;
+  opacity: 0.85;
+}
+
+
+
 .plaintext-mode {
-  background: #3a1f00;
-  color: #ffd48a;
-  border-color: #ff9f1a;
+  background: var(--pill-plaintext-bg);
+  color: var(--pill-plaintext-text);
+  border-color: var(--pill-plaintext-border);
 }
+
 .encrypted-mode {
-  background: #10263a;
-  color: #b7e3ff;
-  border-color: #4aa3ff;
+  background: var(--pill-encrypted-bg);
+  color: var(--pill-encrypted-text);
+  border-color: var(--pill-encrypted-border);
+  box-shadow: var(--shadow-glow-cyan);
 }
+
 .reconnecting-mode {
-  background: #3d3400;
-  color: #fff1a8;
-  border-color: #ffd700;
+  background: var(--alert-warning-bg);
+  color: var(--alert-warning-text);
+  border-color: var(--alert-warning-border);
 }
+
 .disconnected-mode {
-  background: #4a120f;
-  color: #ffd1cb;
-  border-color: #ff5a4f;
+  background: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border-color: var(--alert-danger-border);
 }
 </style>

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ConfigurableIceStrategy, DefaultIceStrategy, IceStrategyResolver } from '../iceServerStrategy';
 
-describe('IceServerStrategy (GOF Strategy Pattern)', () => {
+describe('IceServerStrategy', () => {
   it('DefaultIceStrategy returns fallback public STUN/TURN servers', () => {
     const strategy = new DefaultIceStrategy();
     const servers = strategy.getIceServers();
@@ -18,8 +18,8 @@ describe('IceServerStrategy (GOF Strategy Pattern)', () => {
     const strategy = new ConfigurableIceStrategy(customConfig);
     const servers = strategy.getIceServers();
 
-    expect(servers[0].username).toBe('securechat');
-    expect(servers[0].credential).toBe('password123');
+    expect(servers[0]!.username).toBe('securechat');
+    expect(servers[0]!.credential).toBe('password123');
     expect(servers.some((s) => typeof s.urls === 'string' && s.urls.includes('transport=tcp'))).toBe(true);
   });
 

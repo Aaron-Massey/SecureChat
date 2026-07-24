@@ -1,9 +1,8 @@
-import type { SecurePayload, FileMetadata, ChunkMetadata } from '@shared/types/payload';
+import type { SecurePayload, FileMetadata, FileChunkMetadata } from '@shared/types/payload';
 
 /**
- * Factory Method / Abstract Factory Pattern: PayloadFactory
- * Encapsulates standard creation of SecurePayload objects for text messages,
- * file headers, and file chunks.
+ * Factory Method Pattern: PayloadFactory
+ * Constructs message, file header, and file chunk payloads.
  */
 export class PayloadFactory {
   /**
@@ -56,7 +55,7 @@ export class PayloadFactory {
    */
   public static createFileChunkPayload(
     senderDisplayName: string,
-    chunkMetadata: ChunkMetadata,
+    chunkMetadata: FileChunkMetadata,
     encryptedChunkPayload?: SecurePayload,
     base64PlaintextChunk?: string,
     timestamp: string = new Date().toLocaleTimeString()

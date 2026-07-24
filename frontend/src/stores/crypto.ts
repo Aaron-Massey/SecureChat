@@ -11,6 +11,7 @@ export interface DecryptResult {
   success: boolean;
   plaintext: string;
   senderDisplayName: string;
+  error?: string;
 }
 
 export const useCryptoStore = defineStore('crypto', () => {

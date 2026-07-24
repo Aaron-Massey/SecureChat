@@ -1,5 +1,8 @@
 import CryptoJS from 'crypto-js';
 
+/**
+ * Strategy Pattern: ICipherStrategy
+ */
 export interface ICipherStrategy {
   readonly cipherName: 'AES' | 'DES';
   readonly ivByteLength: number;
