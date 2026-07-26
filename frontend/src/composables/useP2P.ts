@@ -5,6 +5,7 @@ import { P2PManager, type ConnectionStatus } from '@/services/p2pManager';
 import { PayloadFactory } from '@/factories/payload.factory';
 import { ConnectionStateContext } from '@/patterns/connectionState';
 import { CommandQueueManager, SendTextMessageCommand, SendFileMessageCommand } from '@/commands/chatCommands';
+import { MessageRateLimiter } from '@/utils/rateLimiter';
 import {
   sliceFileIntoChunks,
   arrayBufferToBase64,
@@ -17,10 +18,12 @@ import {
 export interface ChatMessage {
   id?: string;
   sender: string;
+  senderSessionId?: string;
   text?: string;
   decrypted: boolean;
   timestamp: string;
   isSystem?: boolean;
+  isPending?: boolean;
   fileAttachment?: {
     fileId: string;
     fileName: string;
@@ -38,9 +41,26 @@ export function useP2P() {
   const debugHistory = ref<SecurePayload[]>([]);
   const connectionStatus = ref<ConnectionStatus>('disconnected');
   const connectionDetail = ref<string>('Initializing...');
+  const pendingCount = ref<number>(0);
+
+  const maxQueueSize = Number.parseInt(import.meta.env.VITE_MAX_QUEUE_SIZE ?? '50', 10) || 50;
+  const maxMessagesPerMinute = Number.parseInt(import.meta.env.VITE_MAX_MESSAGES_PER_MINUTE ?? '30', 10) || 30;
+
+  const quotaUsed = ref<number>(0);
+  const quotaMax = ref<number>(maxMessagesPerMinute);
 
   const stateContext = new ConnectionStateContext();
-  const commandQueue = new CommandQueueManager();
+  const commandQueue = new CommandQueueManager(maxQueueSize);
+  const rateLimiter = new MessageRateLimiter(maxMessagesPerMinute, 60000);
+
+  const updateQuota = () => {
+    quotaUsed.value = rateLimiter.count;
+  };
+
+  let quotaInterval: ReturnType<typeof setInterval> | null = null;
+  if (getCurrentInstance()) {
+    quotaInterval = setInterval(updateQuota, 1000);
+  }
 
   const backendUrl = window.location.origin;
 
@@ -55,6 +75,7 @@ export function useP2P() {
     if (payload.cipher === 'none' && payload.plaintext) {
       chatHistory.value.push({
         sender: payload.senderDisplayName,
+        senderSessionId: payload.senderSessionId,
         text: payload.plaintext,
         decrypted: true,
         timestamp
@@ -64,6 +85,7 @@ export function useP2P() {
       if (result.success) {
         chatHistory.value.push({
           sender: result.senderDisplayName,
+          senderSessionId: payload.senderSessionId,
           text: result.plaintext,
           decrypted: true,
           timestamp
@@ -71,6 +93,7 @@ export function useP2P() {
       } else {
         chatHistory.value.push({
           sender: payload.senderDisplayName,
+          senderSessionId: payload.senderSessionId,
           text: 'Failed to decrypt message',
           decrypted: false,
           timestamp
@@ -99,6 +122,7 @@ export function useP2P() {
     chatHistory.value.push({
       id: meta.fileId,
       sender: headerPayload.senderDisplayName,
+      senderSessionId: headerPayload.senderSessionId,
       decrypted: isHeaderDecrypted,
       text: isHeaderDecrypted ? undefined : `⚠️ Key verification failed for file "${meta.fileName}"`,
       timestamp,
@@ -209,7 +233,12 @@ export function useP2P() {
     }
 
     if (status === 'connected' && commandQueue.pendingCount > 0) {
-      commandQueue.flush();
+      commandQueue.flush().then(() => {
+        pendingCount.value = commandQueue.pendingCount;
+        chatHistory.value.forEach((msg) => {
+          if (msg.isPending) msg.isPending = false;
+        });
+      });
     }
   };
 
@@ -229,10 +258,44 @@ export function useP2P() {
   }, iceConfig);
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
+    if (!rateLimiter.isAllowed()) {
+      updateQuota();
+      chatHistory.value.push({
+        sender: 'System',
+        text: `Rate limit exceeded: Maximum ${maxMessagesPerMinute} messages per minute allowed to prevent connection spam.`,
+        decrypted: true,
+        isSystem: true,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      return;
+    }
+    updateQuota();
+
     const currentState = stateContext.state;
     if (!currentState.canSend && connectionStatus.value !== 'connected') {
       const cmd = new SendTextMessageCommand((t, s) => p2pManager.broadcastMessage(s === senderDisplayName ? PayloadFactory.createTextPayload(s, t) : cryptoStore.encryptMessage(t, s)), plaintext, senderDisplayName);
-      commandQueue.enqueue(cmd);
+      const enqueued = commandQueue.enqueue(cmd);
+      if (!enqueued) {
+        chatHistory.value.push({
+          sender: 'System',
+          text: `Queue full: Maximum ${maxQueueSize} offline messages limit reached. Outbound message dropped.`,
+          decrypted: true,
+          isSystem: true,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        return;
+      }
+
+      pendingCount.value = commandQueue.pendingCount;
+
+      chatHistory.value.push({
+        sender: 'Me',
+        text: plaintext,
+        decrypted: true,
+        isPending: true,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      return;
     }
 
     sendP2PMessageDirect(plaintext, senderDisplayName);
@@ -250,10 +313,12 @@ export function useP2P() {
       payload = PayloadFactory.createTextPayload(senderDisplayName, plaintext, timestamp);
     }
 
+    payload.senderSessionId = p2pManager.socketId;
     p2pManager.broadcastMessage(payload);
 
     chatHistory.value.push({
       sender: 'Me',
+      senderSessionId: p2pManager.socketId,
       text: plaintext,
       decrypted: true,
       timestamp
@@ -263,10 +328,54 @@ export function useP2P() {
   };
 
   const sendP2PFile = async (file: File, senderDisplayName: string): Promise<void> => {
+    if (!rateLimiter.isAllowed()) {
+      updateQuota();
+      chatHistory.value.push({
+        sender: 'System',
+        text: `Rate limit exceeded: Maximum ${maxMessagesPerMinute} messages per minute allowed to prevent connection spam.`,
+        decrypted: true,
+        isSystem: true,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      return;
+    }
+    updateQuota();
+
     const currentState = stateContext.state;
     if (!currentState.canSend && connectionStatus.value !== 'connected') {
       const cmd = new SendFileMessageCommand((f, s) => sendP2PFileDirect(f, s), file, senderDisplayName);
-      commandQueue.enqueue(cmd);
+      const enqueued = commandQueue.enqueue(cmd);
+      if (!enqueued) {
+        chatHistory.value.push({
+          sender: 'System',
+          text: `Queue full: Maximum ${maxQueueSize} offline messages limit reached. Outbound file dropped.`,
+          decrypted: true,
+          isSystem: true,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        return;
+      }
+
+      pendingCount.value = commandQueue.pendingCount;
+
+      const timestamp = new Date().toLocaleTimeString();
+      const fileId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      chatHistory.value.push({
+        id: fileId,
+        sender: 'Me',
+        decrypted: true,
+        timestamp,
+        isPending: true,
+        fileAttachment: {
+          fileId,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type || 'application/octet-stream',
+          mediaUrl: URL.createObjectURL(file),
+          progress: 0,
+          isTransferring: false
+        }
+      });
       return;
     }
 
@@ -349,10 +458,11 @@ export function useP2P() {
 
   if (getCurrentInstance()) {
     onUnmounted(() => {
+      if (quotaInterval) clearInterval(quotaInterval);
       p2pManager.destroy();
     });
   }
 
-  return { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus, connectionDetail };
+  return { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus, connectionDetail, pendingCount, quotaUsed, quotaMax };
 }
 

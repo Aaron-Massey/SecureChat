@@ -50,10 +50,20 @@ export class SendFileMessageCommand implements IChatCommand {
  */
 export class CommandQueueManager {
   private queue: IChatCommand[] = [];
+  private maxQueueSize: number;
 
-  public enqueue(command: IChatCommand): void {
+  constructor(maxQueueSize: number = 50) {
+    this.maxQueueSize = maxQueueSize;
+  }
+
+  public enqueue(command: IChatCommand): boolean {
+    if (this.queue.length >= this.maxQueueSize) {
+      console.warn(`Command queue limit reached (${this.queue.length}/${this.maxQueueSize}). Command dropped.`);
+      return false;
+    }
     this.queue.push(command);
-    console.log(`Enqueued command ${command.id} (queue size: ${this.queue.length})`);
+    console.log(`Enqueued command ${command.id} (queue size: ${this.queue.length}/${this.maxQueueSize})`);
+    return true;
   }
 
   public async flush(): Promise<void> {
@@ -78,5 +88,9 @@ export class CommandQueueManager {
 
   public get pendingCount(): number {
     return this.queue.length;
+  }
+
+  public get capacity(): number {
+    return this.maxQueueSize;
   }
 }

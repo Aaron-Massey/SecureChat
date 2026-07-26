@@ -16,6 +16,14 @@
       <span class="banner-subtext">Signaling server unreachable. Retrying automatically...</span>
     </div>
 
+    <div v-if="pendingCount && pendingCount > 0" class="mode-banner pending-mode" role="status" aria-live="polite">
+      <div class="banner-header">
+        <Clock class="banner-icon" :size="16" />
+        <strong>{{ pendingCount }} Outbound {{ pendingCount === 1 ? 'Message' : 'Messages' }} Queued</strong>
+      </div>
+      <span class="banner-subtext">Connection offline. Outbound messages will send automatically when reconnected.</span>
+    </div>
+
     <div v-if="!isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite">
       <div class="banner-header">
         <ShieldAlert class="banner-icon" :size="16" />
@@ -35,12 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { RefreshCw, AlertTriangle, ShieldAlert, Shield } from '@lucide/vue';
+import { RefreshCw, AlertTriangle, ShieldAlert, Shield, Clock } from '@lucide/vue';
 import type { ConnectionStatus } from '@/services/p2pManager';
 
 defineProps<{
   isEncrypted: boolean;
   connectionStatus?: ConnectionStatus;
+  pendingCount?: number;
 }>();
 </script>
 
@@ -98,6 +107,12 @@ defineProps<{
   color: var(--pill-encrypted-text);
   border-color: var(--pill-encrypted-border);
   box-shadow: var(--shadow-glow-cyan);
+}
+
+.pending-mode {
+  background: rgba(234, 179, 8, 0.12);
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.3);
 }
 
 .reconnecting-mode {

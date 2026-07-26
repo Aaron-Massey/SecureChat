@@ -123,12 +123,12 @@
 
       <div v-if="showSideBySide" class="dual-pane-container">
         <div class="chat-pane panel">
-          <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" />
+          <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" :pendingCount="pendingCount" />
           <MessageFeed
             :chatHistory="chatHistory"
             v-model:showUndecrypted="showUndecrypted"
           />
-          <MessageInput @send="sendMessage" @sendFile="handleSendFile" />
+          <MessageInput :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
         </div>
 
         <div class="terminal-pane">
@@ -138,12 +138,12 @@
 
       <div v-else class="tabbed-container">
         <div v-show="activeTab === 'chat'" class="chat-pane panel">
-          <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" />
+          <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" :pendingCount="pendingCount" />
           <MessageFeed
             :chatHistory="chatHistory"
             v-model:showUndecrypted="showUndecrypted"
           />
-          <MessageInput @send="sendMessage" @sendFile="handleSendFile" />
+          <MessageInput :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
         </div>
 
         <div v-show="activeTab === 'terminal'" class="terminal-pane">
@@ -216,7 +216,7 @@ import {
 } from '@lucide/vue';
 
 const crypto = useCryptoStore();
-const { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus } = useP2P();
+const { sendP2PMessage, sendP2PFile, chatHistory, debugHistory, connectionStatus, pendingCount, quotaUsed, quotaMax } = useP2P();
 const { currentTheme, toggleTheme } = useTheme();
 
 const {
@@ -277,9 +277,9 @@ onUnmounted(() => {
 });
 
 const passwordInput = ref('');
-const displayName = ref('');
+const displayName = ref('Anonymous');
 const showUndecrypted = ref(true);
-const isSetup = ref(false);
+const isSetup = ref(true);
 
 const isDraggingFile = ref(false);
 let dragCounter = 0;
@@ -323,14 +323,14 @@ const handleDrop = (e: DragEvent) => {
 };
 
 const sendMessage = (text: string) => {
-  if (!text || (!isSetup.value && !crypto.isReady)) return;
-  const nameToUse = displayName.value.trim() || 'Anonymous';
+  if (!text) return;
+  const nameToUse = displayName.value.trim() || 'User';
   sendP2PMessage(text, nameToUse);
 };
 
 const handleSendFile = (file: File) => {
-  if (!file || (!isSetup.value && !crypto.isReady)) return;
-  const nameToUse = displayName.value.trim() || 'Anonymous';
+  if (!file) return;
+  const nameToUse = displayName.value.trim() || 'User';
   sendP2PFile(file, nameToUse);
 };
 
