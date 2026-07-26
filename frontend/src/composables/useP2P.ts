@@ -17,6 +17,7 @@ import {
 export interface ChatMessage {
   id?: string;
   sender: string;
+  senderSessionId?: string;
   text?: string;
   decrypted: boolean;
   timestamp: string;
@@ -55,6 +56,7 @@ export function useP2P() {
     if (payload.cipher === 'none' && payload.plaintext) {
       chatHistory.value.push({
         sender: payload.senderDisplayName,
+        senderSessionId: payload.senderSessionId,
         text: payload.plaintext,
         decrypted: true,
         timestamp
@@ -64,6 +66,7 @@ export function useP2P() {
       if (result.success) {
         chatHistory.value.push({
           sender: result.senderDisplayName,
+          senderSessionId: payload.senderSessionId,
           text: result.plaintext,
           decrypted: true,
           timestamp
@@ -71,6 +74,7 @@ export function useP2P() {
       } else {
         chatHistory.value.push({
           sender: payload.senderDisplayName,
+          senderSessionId: payload.senderSessionId,
           text: 'Failed to decrypt message',
           decrypted: false,
           timestamp
@@ -99,6 +103,7 @@ export function useP2P() {
     chatHistory.value.push({
       id: meta.fileId,
       sender: headerPayload.senderDisplayName,
+      senderSessionId: headerPayload.senderSessionId,
       decrypted: isHeaderDecrypted,
       text: isHeaderDecrypted ? undefined : `⚠️ Key verification failed for file "${meta.fileName}"`,
       timestamp,
@@ -231,7 +236,8 @@ export function useP2P() {
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
     const currentState = stateContext.state;
     if (!currentState.canSend && connectionStatus.value !== 'connected') {
-      const cmd = new SendTextMessageCommand((t, s) => p2pManager.broadcastMessage(s === senderDisplayName ? PayloadFactory.createTextPayload(s, t) : cryptoStore.encryptMessage(t, s)), plaintext, senderDisplayName);
+      const sessionId = p2pManager.getSessionId();
+      const cmd = new SendTextMessageCommand((t, s) => p2pManager.broadcastMessage(s === senderDisplayName ? PayloadFactory.createTextPayload(s, t, undefined, sessionId) : cryptoStore.encryptMessage(t, s, sessionId)), plaintext, senderDisplayName);
       commandQueue.enqueue(cmd);
     }
 
@@ -241,19 +247,21 @@ export function useP2P() {
   const sendP2PMessageDirect = (plaintext: string, senderDisplayName: string) => {
     let payload: SecurePayload;
     const timestamp = new Date().toLocaleTimeString();
+    const sessionId = p2pManager.getSessionId();
 
     if (cryptoStore.isReady) {
-      payload = cryptoStore.encryptMessage(plaintext, senderDisplayName);
+      payload = cryptoStore.encryptMessage(plaintext, senderDisplayName, sessionId);
       payload.timestamp = timestamp;
       payload.type = 'text';
     } else {
-      payload = PayloadFactory.createTextPayload(senderDisplayName, plaintext, timestamp);
+      payload = PayloadFactory.createTextPayload(senderDisplayName, plaintext, timestamp, sessionId);
     }
 
     p2pManager.broadcastMessage(payload);
 
     chatHistory.value.push({
       sender: 'Me',
+      senderSessionId: sessionId,
       text: plaintext,
       decrypted: true,
       timestamp
@@ -275,6 +283,7 @@ export function useP2P() {
 
   const sendP2PFileDirect = async (file: File, senderDisplayName: string): Promise<void> => {
     const timestamp = new Date().toLocaleTimeString();
+    const sessionId = p2pManager.getSessionId();
     const rawChunks = await sliceFileIntoChunks(file);
     const fileId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const fileHash = computeBufferHash(rawChunks[0] || new ArrayBuffer(0));
@@ -292,10 +301,10 @@ export function useP2P() {
     let headerPayload: SecurePayload;
 
     if (cryptoStore.isReady) {
-      const encrypted = cryptoStore.encryptMessage(`FILE:${file.name}`, senderDisplayName);
-      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, encrypted, timestamp);
+      const encrypted = cryptoStore.encryptMessage(`FILE:${file.name}`, senderDisplayName, sessionId);
+      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, encrypted, timestamp, sessionId);
     } else {
-      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, undefined, timestamp);
+      headerPayload = PayloadFactory.createFileHeaderPayload(senderDisplayName, fileMetadata, undefined, timestamp, sessionId);
     }
 
     const chunkPayloads: SecurePayload[] = [];
@@ -315,10 +324,10 @@ export function useP2P() {
       };
 
       if (cryptoStore.isReady) {
-        const encryptedChunk = cryptoStore.encryptMessage(base64Chunk, senderDisplayName);
-        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, encryptedChunk, undefined, timestamp);
+        const encryptedChunk = cryptoStore.encryptMessage(base64Chunk, senderDisplayName, sessionId);
+        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, encryptedChunk, undefined, timestamp, sessionId);
       } else {
-        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, undefined, base64Chunk, timestamp);
+        chunkPayload = PayloadFactory.createFileChunkPayload(senderDisplayName, chunkMetadata, undefined, base64Chunk, timestamp, sessionId);
       }
 
       chunkPayloads.push(chunkPayload);
@@ -331,6 +340,7 @@ export function useP2P() {
     chatHistory.value.push({
       id: fileId,
       sender: 'Me',
+      senderSessionId: sessionId,
       decrypted: true,
       timestamp,
       fileAttachment: {

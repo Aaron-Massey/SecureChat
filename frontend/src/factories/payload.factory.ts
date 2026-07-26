@@ -11,10 +11,12 @@ export class PayloadFactory {
   public static createTextPayload(
     senderDisplayName: string,
     plaintext: string,
-    timestamp: string = new Date().toLocaleTimeString()
+    timestamp: string = new Date().toLocaleTimeString(),
+    senderSessionId?: string
   ): SecurePayload {
     return {
       senderDisplayName,
+      senderSessionId,
       plaintext,
       cipher: 'none',
       type: 'text',
@@ -29,11 +31,13 @@ export class PayloadFactory {
     senderDisplayName: string,
     fileMetadata: FileMetadata,
     encryptedHeaderPayload?: SecurePayload,
-    timestamp: string = new Date().toLocaleTimeString()
+    timestamp: string = new Date().toLocaleTimeString(),
+    senderSessionId?: string
   ): SecurePayload {
     if (encryptedHeaderPayload) {
       return {
         ...encryptedHeaderPayload,
+        senderSessionId: senderSessionId || encryptedHeaderPayload.senderSessionId,
         type: 'file-header',
         fileMetadata,
         timestamp
@@ -42,6 +46,7 @@ export class PayloadFactory {
 
     return {
       senderDisplayName,
+      senderSessionId,
       plaintext: `FILE:${fileMetadata.fileName}`,
       cipher: 'none',
       type: 'file-header',
@@ -58,11 +63,13 @@ export class PayloadFactory {
     chunkMetadata: FileChunkMetadata,
     encryptedChunkPayload?: SecurePayload,
     base64PlaintextChunk?: string,
-    timestamp: string = new Date().toLocaleTimeString()
+    timestamp: string = new Date().toLocaleTimeString(),
+    senderSessionId?: string
   ): SecurePayload {
     if (encryptedChunkPayload) {
       return {
         ...encryptedChunkPayload,
+        senderSessionId: senderSessionId || encryptedChunkPayload.senderSessionId,
         type: 'file-chunk',
         chunkMetadata,
         timestamp
@@ -71,6 +78,7 @@ export class PayloadFactory {
 
     return {
       senderDisplayName,
+      senderSessionId,
       plaintext: base64PlaintextChunk || '',
       cipher: 'none',
       type: 'file-chunk',

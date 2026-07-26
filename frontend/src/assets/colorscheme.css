@@ -63,6 +63,31 @@
   --accent-rose: var(--color-dracula-red);
   --accent-yellow: var(--color-dracula-yellow);
 
+  /* Dynamic User Session Color Palette */
+  --user-color-1: var(--accent-cyan);
+  --user-avatar-bg-1: rgba(var(--color-dracula-cyan-rgb), 0.15);
+  --user-avatar-border-1: rgba(var(--color-dracula-cyan-rgb), 0.35);
+
+  --user-color-2: var(--accent-emerald);
+  --user-avatar-bg-2: rgba(var(--color-dracula-green-rgb), 0.15);
+  --user-avatar-border-2: rgba(var(--color-dracula-green-rgb), 0.35);
+
+  --user-color-3: var(--accent-purple);
+  --user-avatar-bg-3: rgba(var(--color-dracula-purple-rgb), 0.15);
+  --user-avatar-border-3: rgba(var(--color-dracula-purple-rgb), 0.35);
+
+  --user-color-4: var(--accent-amber);
+  --user-avatar-bg-4: rgba(var(--color-dracula-orange-rgb), 0.15);
+  --user-avatar-border-4: rgba(var(--color-dracula-orange-rgb), 0.35);
+
+  --user-color-5: var(--accent-pink);
+  --user-avatar-bg-5: rgba(var(--color-dracula-pink-rgb), 0.15);
+  --user-avatar-border-5: rgba(var(--color-dracula-pink-rgb), 0.35);
+
+  --user-color-6: var(--accent-yellow);
+  --user-avatar-bg-6: rgba(241, 250, 140, 0.15);
+  --user-avatar-border-6: rgba(241, 250, 140, 0.35);
+
   /* Typography */
   --text-primary: var(--color-dracula-fg);
   --text-secondary: var(--color-dracula-comment);
@@ -85,16 +110,16 @@
   --alert-warning-border: rgba(var(--color-dracula-orange-rgb), 0.4);
   --alert-warning-text: var(--color-dracula-yellow);
 
-  --badge-system-bg: rgba(var(--color-dracula-purple-rgb), 0.2);
-  --badge-system-text: var(--color-dracula-purple);
-  --system-avatar-bg: linear-gradient(135deg, rgba(var(--color-dracula-purple-rgb), 0.25), rgba(var(--color-dracula-cyan-rgb), 0.25));
-  --system-avatar-border: rgba(var(--color-dracula-purple-rgb), 0.4);
+  --badge-system-bg: rgba(var(--color-dracula-red-rgb), 0.2);
+  --badge-system-text: var(--accent-rose);
+  --system-avatar-bg: linear-gradient(135deg, rgba(var(--color-dracula-red-rgb), 0.25), rgba(var(--color-dracula-orange-rgb), 0.25));
+  --system-avatar-border: rgba(var(--color-dracula-red-rgb), 0.4);
 
   --avatar-default-bg: linear-gradient(135deg, rgba(var(--color-dracula-cyan-rgb), 0.2), rgba(var(--color-dracula-purple-rgb), 0.2));
   --avatar-default-border: var(--accent-cyan-glow);
 
-  --card-system-bg: rgba(var(--color-dracula-purple-rgb), 0.08);
-  --card-system-border: rgba(var(--color-dracula-purple-rgb), 0.25);
+  --card-system-bg: rgba(var(--color-dracula-red-rgb), 0.08);
+  --card-system-border: rgba(var(--color-dracula-red-rgb), 0.25);
 
   --pill-encrypted-bg: rgba(var(--color-dracula-cyan-rgb), 0.15);
   --pill-encrypted-border: rgba(var(--color-dracula-cyan-rgb), 0.35);
@@ -187,6 +212,31 @@
   --accent-rose: var(--color-light-rose);
   --accent-yellow: var(--color-light-yellow);
 
+  /* Dynamic User Session Color Palette */
+  --user-color-1: var(--accent-cyan);
+  --user-avatar-bg-1: rgba(var(--color-light-cyan-rgb), 0.12);
+  --user-avatar-border-1: rgba(var(--color-light-cyan-rgb), 0.35);
+
+  --user-color-2: var(--accent-emerald);
+  --user-avatar-bg-2: rgba(var(--color-light-emerald-rgb), 0.12);
+  --user-avatar-border-2: rgba(var(--color-light-emerald-rgb), 0.35);
+
+  --user-color-3: var(--accent-purple);
+  --user-avatar-bg-3: rgba(var(--color-light-purple-rgb), 0.12);
+  --user-avatar-border-3: rgba(var(--color-light-purple-rgb), 0.35);
+
+  --user-color-4: var(--accent-amber);
+  --user-avatar-bg-4: rgba(217, 119, 6, 0.12);
+  --user-avatar-border-4: rgba(217, 119, 6, 0.35);
+
+  --user-color-5: var(--accent-pink);
+  --user-avatar-bg-5: rgba(219, 39, 119, 0.12);
+  --user-avatar-border-5: rgba(219, 39, 119, 0.35);
+
+  --user-color-6: var(--accent-yellow);
+  --user-avatar-bg-6: rgba(202, 138, 4, 0.12);
+  --user-avatar-border-6: rgba(202, 138, 4, 0.35);
+
   /* Typography */
   --text-primary: var(--color-light-fg);
   --text-secondary: var(--color-light-subtext);
@@ -209,16 +259,16 @@
   --alert-warning-border: #fcd34d;
   --alert-warning-text: #b45309;
 
-  --badge-system-bg: #f3e8ff;
-  --badge-system-text: #6d28d9;
-  --system-avatar-bg: linear-gradient(135deg, #f3e8ff, #e0f2fe);
-  --system-avatar-border: #c084fc;
+  --badge-system-bg: #ffe4e6;
+  --badge-system-text: var(--accent-rose);
+  --system-avatar-bg: linear-gradient(135deg, #ffe4e6, #fef3c7);
+  --system-avatar-border: #f43f5e;
 
   --avatar-default-bg: linear-gradient(135deg, #e0f2fe, #f3e8ff);
   --avatar-default-border: #7dd3fc;
 
-  --card-system-bg: #faf5ff;
-  --card-system-border: #e9d5ff;
+  --card-system-bg: #fff1f2;
+  --card-system-border: #fecdd3;
 
   --pill-encrypted-bg: var(--color-light-encrypted-bg);
   --pill-encrypted-border: var(--color-light-encrypted-border);

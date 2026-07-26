@@ -323,13 +323,13 @@ const handleDrop = (e: DragEvent) => {
 };
 
 const sendMessage = (text: string) => {
-  if (!text || (!isSetup.value && !crypto.isReady)) return;
+  if (!text) return;
   const nameToUse = displayName.value.trim() || 'Anonymous';
   sendP2PMessage(text, nameToUse);
 };
 
 const handleSendFile = (file: File) => {
-  if (!file || (!isSetup.value && !crypto.isReady)) return;
+  if (!file) return;
   const nameToUse = displayName.value.trim() || 'Anonymous';
   sendP2PFile(file, nameToUse);
 };

@@ -45,7 +45,8 @@ export const useCryptoStore = defineStore('crypto', () => {
 
   const encryptMessage = (
     plaintext: string,
-    senderDisplayName: string
+    senderDisplayName: string,
+    senderSessionId?: string
   ): SecurePayload => {
     if (!isReady.value || !ratchetContext) {
       throw new Error('Crypto store not ready. Call setupKeys first.');
@@ -64,6 +65,7 @@ export const useCryptoStore = defineStore('crypto', () => {
 
     const payload: SecurePayload = {
       senderDisplayName,
+      senderSessionId,
       iv: ivHex,
       ciphertext: ciphertextHex,
       version: currentVersion,

@@ -307,6 +307,10 @@ export class P2PManager {
     }
   }
 
+  public getSessionId(): string {
+    return this.socket.id || '';
+  }
+
   public broadcastMessage(payload: SecurePayload): void {
     const messageString = JSON.stringify(payload);
     this.dataChannels.forEach((channel, peerId) => {

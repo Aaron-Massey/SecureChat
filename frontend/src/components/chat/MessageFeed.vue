@@ -26,7 +26,11 @@
         class="message-wrapper fade-in"
         :class="{ 'undecrypted': !msg.decrypted, 'system-wrapper': isSystemMessage(msg) }"
       >
-        <div class="avatar-icon" :class="{ 'system-avatar': isSystemMessage(msg) }">
+        <div
+          class="avatar-icon"
+          :class="{ 'system-avatar': isSystemMessage(msg) }"
+          :style="getAvatarStyle(msg)"
+        >
           <ServerCog v-if="isSystemMessage(msg)" :size="16" />
           <template v-else>{{ getAvatarInitial(msg.sender) }}</template>
         </div>
@@ -34,7 +38,7 @@
         <div class="bubble-card" :class="{ 'system-card': isSystemMessage(msg) }">
           <div class="bubble-header">
             <div class="sender-info">
-              <span class="sender-name">{{ msg.sender }}</span>
+              <span class="sender-name" :style="getSenderNameStyle(msg)">{{ msg.sender }}</span>
               <span v-if="isSystemMessage(msg)" class="system-badge">SYSTEM</span>
             </div>
             <span class="timestamp">{{ msg.timestamp }}</span>
@@ -79,6 +83,48 @@ defineEmits<{
 }>();
 
 const feedRef = ref<HTMLElement | null>(null);
+
+const USER_COLORS = [
+  { text: 'var(--user-color-1)', bg: 'var(--user-avatar-bg-1)', border: 'var(--user-avatar-border-1)' },
+  { text: 'var(--user-color-2)', bg: 'var(--user-avatar-bg-2)', border: 'var(--user-avatar-border-2)' },
+  { text: 'var(--user-color-3)', bg: 'var(--user-avatar-bg-3)', border: 'var(--user-avatar-border-3)' },
+  { text: 'var(--user-color-4)', bg: 'var(--user-avatar-bg-4)', border: 'var(--user-avatar-border-4)' },
+  { text: 'var(--user-color-5)', bg: 'var(--user-avatar-bg-5)', border: 'var(--user-avatar-border-5)' },
+  { text: 'var(--user-color-6)', bg: 'var(--user-avatar-bg-6)', border: 'var(--user-avatar-border-6)' },
+];
+
+const getUserColorStyle = (msg: ChatMessage) => {
+  if (isSystemMessage(msg)) {
+    return {
+      text: 'var(--accent-rose)',
+      bg: 'var(--system-avatar-bg)',
+      border: 'var(--system-avatar-border)'
+    };
+  }
+  const identifier = msg.senderSessionId || msg.sender || 'Anonymous';
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % USER_COLORS.length;
+  return USER_COLORS[index]!;
+};
+
+const getAvatarStyle = (msg: ChatMessage) => {
+  const styleObj = getUserColorStyle(msg);
+  return {
+    color: styleObj.text,
+    background: styleObj.bg,
+    borderColor: styleObj.border
+  };
+};
+
+const getSenderNameStyle = (msg: ChatMessage) => {
+  const styleObj = getUserColorStyle(msg);
+  return {
+    color: styleObj.text
+  };
+};
 
 const filteredChatHistory = computed(() => {
   if (props.showUndecrypted) {
@@ -193,7 +239,7 @@ watch(
 .system-avatar {
   background: var(--system-avatar-bg);
   border-color: var(--system-avatar-border);
-  color: var(--accent-purple);
+  color: var(--accent-rose);
 }
 
 .bubble-card {
@@ -231,7 +277,7 @@ watch(
 }
 
 .system-card .sender-name {
-  color: var(--accent-purple);
+  color: var(--accent-rose);
 }
 
 .system-badge {
