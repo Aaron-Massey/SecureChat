@@ -40,6 +40,7 @@
             <div class="sender-info">
               <span class="sender-name" :style="getSenderNameStyle(msg)">{{ msg.sender }}</span>
               <span v-if="isSystemMessage(msg)" class="system-badge">SYSTEM</span>
+              <span v-if="msg.isPending" class="pending-badge" title="Queued offline message"><Clock :size="12" /> Queued</span>
             </div>
             <span class="timestamp">{{ msg.timestamp }}</span>
           </div>
@@ -69,7 +70,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { MessageSquare, Lock, ServerCog } from '@lucide/vue';
+import { MessageSquare, Lock, ServerCog, Clock } from '@lucide/vue';
 import type { ChatMessage } from '@/composables/useP2P';
 import MediaAttachment from './MediaAttachment.vue';
 
@@ -289,6 +290,19 @@ watch(
   padding: 0.1rem 0.35rem;
   border-radius: var(--radius-xs);
   letter-spacing: 0.05em;
+}
+
+.pending-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-xs);
 }
 
 .timestamp {

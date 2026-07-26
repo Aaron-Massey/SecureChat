@@ -54,12 +54,15 @@
   /* Primary Brand & Accents */
   --accent-cyan: var(--color-dracula-cyan);
   --accent-cyan-glow: rgba(var(--color-dracula-cyan-rgb), 0.35);
+  --accent-green: var(--color-dracula-green);
   --accent-emerald: var(--color-dracula-green);
   --accent-emerald-glow: rgba(var(--color-dracula-green-rgb), 0.35);
+  --accent-orange: var(--color-dracula-orange);
   --accent-purple: var(--color-dracula-purple);
   --accent-purple-glow: rgba(var(--color-dracula-purple-rgb), 0.35);
   --accent-pink: var(--color-dracula-pink);
   --accent-amber: var(--color-dracula-orange);
+  --accent-red: var(--color-dracula-red);
   --accent-rose: var(--color-dracula-red);
   --accent-yellow: var(--color-dracula-yellow);
 
@@ -115,8 +118,8 @@
   --system-avatar-bg: linear-gradient(135deg, rgba(var(--color-dracula-red-rgb), 0.25), rgba(var(--color-dracula-orange-rgb), 0.25));
   --system-avatar-border: rgba(var(--color-dracula-red-rgb), 0.4);
 
-  --avatar-default-bg: linear-gradient(135deg, rgba(var(--color-dracula-cyan-rgb), 0.2), rgba(var(--color-dracula-purple-rgb), 0.2));
-  --avatar-default-border: var(--accent-cyan-glow);
+  --avatar-default-bg: var(--color-dracula-current-line);
+  --avatar-default-border: var(--border-subtle);
 
   --card-system-bg: rgba(var(--color-dracula-red-rgb), 0.08);
   --card-system-border: rgba(var(--color-dracula-red-rgb), 0.25);
@@ -203,12 +206,15 @@
   /* Primary Brand & Accents */
   --accent-cyan: var(--color-light-cyan);
   --accent-cyan-glow: rgba(var(--color-light-cyan-rgb), 0.25);
+  --accent-green: var(--color-light-emerald);
   --accent-emerald: var(--color-light-emerald);
   --accent-emerald-glow: rgba(var(--color-light-emerald-rgb), 0.25);
+  --accent-orange: var(--color-light-amber);
   --accent-purple: var(--color-light-purple);
   --accent-purple-glow: rgba(var(--color-light-purple-rgb), 0.25);
   --accent-pink: var(--color-light-pink);
   --accent-amber: var(--color-light-amber);
+  --accent-red: var(--color-light-rose);
   --accent-rose: var(--color-light-rose);
   --accent-yellow: var(--color-light-yellow);
 
@@ -264,8 +270,8 @@
   --system-avatar-bg: linear-gradient(135deg, #ffe4e6, #fef3c7);
   --system-avatar-border: #f43f5e;
 
-  --avatar-default-bg: linear-gradient(135deg, #e0f2fe, #f3e8ff);
-  --avatar-default-border: #7dd3fc;
+  --avatar-default-bg: var(--color-light-panel);
+  --avatar-default-border: var(--color-light-border);
 
   --card-system-bg: #fff1f2;
   --card-system-border: #fecdd3;

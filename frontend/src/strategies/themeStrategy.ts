@@ -1,9 +1,13 @@
 /**
- * Strategy Pattern: ThemeStrategy
- * Encapsulates dark mode and light mode color palette strategies for SecureChat P2P.
+ * Theme Manager & Strategy Helpers
+ * Encapsulates dark and light mode theme application.
  */
 
 export type ThemeMode = 'dark' | 'light';
+
+export function applyTheme(mode: ThemeMode): void {
+  document.documentElement.setAttribute('data-theme', mode);
+}
 
 export interface ThemeStrategy {
   readonly mode: ThemeMode;
@@ -12,17 +16,15 @@ export interface ThemeStrategy {
 
 export class DarkThemeStrategy implements ThemeStrategy {
   readonly mode: ThemeMode = 'dark';
-
   applyTheme(): void {
-    document.documentElement.setAttribute('data-theme', 'dark');
+    applyTheme('dark');
   }
 }
 
 export class LightThemeStrategy implements ThemeStrategy {
   readonly mode: ThemeMode = 'light';
-
   applyTheme(): void {
-    document.documentElement.setAttribute('data-theme', 'light');
+    applyTheme('light');
   }
 }
 

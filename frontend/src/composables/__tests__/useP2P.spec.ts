@@ -104,4 +104,14 @@ describe('useP2P File Transfer & Key Verification', () => {
     const result = cryptoStoreReceiver.decryptMessage(encryptedChunk);
     expect(result.success).toBe(false);
   });
+
+  it('counts a file transfer as exactly 1 message in the rate limiter quota', async () => {
+    const { sendP2PFile, quotaUsed } = useP2P();
+    expect(quotaUsed.value).toBe(0);
+
+    const dummyFile = new File(['a'.repeat(100000)], 'large-file.bin', { type: 'application/octet-stream' });
+    await sendP2PFile(dummyFile, 'Alice');
+
+    expect(quotaUsed.value).toBe(1);
+  });
 });

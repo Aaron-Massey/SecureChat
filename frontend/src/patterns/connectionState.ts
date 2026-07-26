@@ -1,62 +1,80 @@
 import type { ConnectionStatus } from '@/services/p2pManager';
 
 /**
- * State Pattern: P2PConnectionState
- * Encapsulates state-specific logic for P2P Connection Status.
+ * P2P Connection Status Details & Capabilities
  */
-export abstract class P2PConnectionState {
+export interface ConnectionStateInfo {
+  status: ConnectionStatus;
+  isConnected: boolean;
+  canSend: boolean;
+  defaultDetail: string;
+}
+
+const STATE_CONFIG: Record<ConnectionStatus, ConnectionStateInfo> = {
+  connected: {
+    status: 'connected',
+    isConnected: true,
+    canSend: true,
+    defaultDetail: 'Connected to signaling server and peers.'
+  },
+  reconnecting: {
+    status: 'reconnecting',
+    isConnected: false,
+    canSend: false,
+    defaultDetail: 'Connection lost. Attempting to reconnect...'
+  },
+  disconnected: {
+    status: 'disconnected',
+    isConnected: false,
+    canSend: false,
+    defaultDetail: 'Disconnected from signaling server.'
+  }
+};
+
+export abstract class P2PConnectionState implements ConnectionStateInfo {
   abstract readonly status: ConnectionStatus;
   abstract readonly isConnected: boolean;
   abstract readonly canSend: boolean;
-  abstract getStatusDetail(detail?: string): string;
-}
-
-export class ConnectedState extends P2PConnectionState {
-  readonly status: ConnectionStatus = 'connected';
-  readonly isConnected = true;
-  readonly canSend = true;
+  abstract readonly defaultDetail: string;
 
   getStatusDetail(detail?: string): string {
-    return detail || 'Connected to signaling server and peers.';
+    return detail || this.defaultDetail;
   }
 }
 
-export class ReconnectingState extends P2PConnectionState {
-  readonly status: ConnectionStatus = 'reconnecting';
-  readonly isConnected = false;
-  readonly canSend = false;
+export class SimpleP2PState extends P2PConnectionState {
+  readonly status: ConnectionStatus;
+  readonly isConnected: boolean;
+  readonly canSend: boolean;
+  readonly defaultDetail: string;
 
-  getStatusDetail(detail?: string): string {
-    return detail || 'Connection lost. Attempting to reconnect...';
+  constructor(info: ConnectionStateInfo) {
+    super();
+    this.status = info.status;
+    this.isConnected = info.isConnected;
+    this.canSend = info.canSend;
+    this.defaultDetail = info.defaultDetail;
   }
 }
 
-export class DisconnectedState extends P2PConnectionState {
-  readonly status: ConnectionStatus = 'disconnected';
-  readonly isConnected = false;
-  readonly canSend = false;
+export class ConnectedState extends SimpleP2PState {
+  constructor() { super(STATE_CONFIG.connected); }
+}
 
-  getStatusDetail(detail?: string): string {
-    return detail || 'Disconnected from signaling server.';
-  }
+export class ReconnectingState extends SimpleP2PState {
+  constructor() { super(STATE_CONFIG.reconnecting); }
+}
+
+export class DisconnectedState extends SimpleP2PState {
+  constructor() { super(STATE_CONFIG.disconnected); }
 }
 
 export class ConnectionStateContext {
   private currentState: P2PConnectionState = new DisconnectedState();
 
   public setState(status: ConnectionStatus): P2PConnectionState {
-    switch (status) {
-      case 'connected':
-        this.currentState = new ConnectedState();
-        break;
-      case 'reconnecting':
-        this.currentState = new ReconnectingState();
-        break;
-      case 'disconnected':
-      default:
-        this.currentState = new DisconnectedState();
-        break;
-    }
+    const config = STATE_CONFIG[status] || STATE_CONFIG.disconnected;
+    this.currentState = new SimpleP2PState(config);
     return this.currentState;
   }
 

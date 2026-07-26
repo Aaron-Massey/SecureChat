@@ -182,7 +182,9 @@ export class P2PManager {
     };
 
     (peerConnection as unknown as { onicecandidateerror: (event: { errorText?: string; errorCode?: number; url?: string }) => void }).onicecandidateerror = (event) => {
-      console.warn(`ICE candidate error for peer ${peerId}: ${event.errorText || event.errorCode} (${event.url})`);
+      if (event.url && event.url.includes('turn:')) {
+        console.warn(`TURN server candidate lookup error for peer ${peerId} (${event.url}): ${event.errorText || event.errorCode}`);
+      }
     };
 
     peerConnection.oniceconnectionstatechange = () => {
@@ -307,11 +309,18 @@ export class P2PManager {
     }
   }
 
+  public get socketId(): string {
+    return this.socket?.id || 'local-session';
+  }
+
   public getSessionId(): string {
-    return this.socket.id || '';
+    return this.socketId;
   }
 
   public broadcastMessage(payload: SecurePayload): void {
+    if (!payload.senderSessionId) {
+      payload.senderSessionId = this.socketId;
+    }
     const messageString = JSON.stringify(payload);
     this.dataChannels.forEach((channel, peerId) => {
       if (channel.readyState === 'open') {
@@ -323,6 +332,9 @@ export class P2PManager {
   }
 
   public async broadcastChunkWithBackpressure(payload: SecurePayload): Promise<void> {
+    if (!payload.senderSessionId) {
+      payload.senderSessionId = this.socketId;
+    }
     const messageString = JSON.stringify(payload);
 
     const sendPromises = Array.from(this.dataChannels.values()).map((channel) => {
