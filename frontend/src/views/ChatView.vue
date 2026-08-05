@@ -8,18 +8,18 @@
     @drop="handleDrop"
   >
     <transition name="drawer-fade">
-      <div v-if="isDraggingFile" class="drag-drop-overlay panel">
+      <div v-if="isDraggingFile" class="drag-drop-overlay panel" role="region" aria-label="File drop area">
         <div class="drag-drop-card fade-in">
-          <UploadCloud class="drag-drop-icon" :size="48" />
+          <UploadCloud class="drag-drop-icon" :size="48" aria-hidden="true" />
           <h2>Drop file to send</h2>
           <p>Peer-to-peer transfer (max 25 MB)</p>
         </div>
       </div>
     </transition>
 
-    <header class="app-header panel">
-      <div class="brand">
-        <div class="brand-icon">
+    <header class="app-header panel" role="banner">
+      <div class="brand" aria-label="SecureChat P2P WebRTC Application">
+        <div class="brand-icon" aria-hidden="true">
           <Shield :size="20" />
         </div>
         <div class="brand-titles">
@@ -29,9 +29,9 @@
       </div>
 
       <div class="header-status-pills" v-if="!shouldUseDrawerSettings">
-        <div class="badge" :class="crypto.isEncrypted ? 'badge-encrypted' : 'badge-plain'">
-          <Lock v-if="crypto.isEncrypted" :size="14" :class="{ 'bounce-lock': isLockBouncing }" />
-          <Unlock v-else :size="14" :class="{ 'unlock-shake': isUnlockShaking }" />
+        <div class="badge" :class="crypto.isEncrypted ? 'badge-encrypted' : 'badge-plain'" role="status" aria-label="Encryption status">
+          <Lock v-if="crypto.isEncrypted" :size="14" :class="{ 'bounce-lock': isLockBouncing }" aria-hidden="true" />
+          <Unlock v-else :size="14" :class="{ 'unlock-shake': isUnlockShaking }" aria-hidden="true" />
           <span>{{ crypto.isEncrypted ? `${crypto.activeBitLength === 128 ? 'AES-128' : 'DES-56'}` : 'PLAINTEXT' }}</span>
         </div>
       </div>
@@ -39,40 +39,47 @@
       <div class="header-controls">
         <Button
           class="btn-layout btn-theme"
+          :aria-label="currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           v-tooltip.top="currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           @click="toggleTheme"
         >
           <transition name="sun-moon" mode="out-in">
-            <Sun v-if="currentTheme === 'dark'" key="sun" :size="16" />
-            <Moon v-else key="moon" :size="16" />
+            <Sun v-if="currentTheme === 'dark'" key="sun" :size="16" aria-hidden="true" />
+            <Moon v-else key="moon" :size="16" aria-hidden="true" />
           </transition>
         </Button>
 
-        <div class="layout-switcher">
+        <div class="layout-switcher" role="group" aria-label="Layout mode selection">
           <div class="switcher-indicator" :style="indicatorStyle"></div>
           <Button
             class="btn-layout"
             :class="{ active: strategyType === 'auto' }"
+            aria-label="Auto Adapt Layout"
+            :aria-pressed="strategyType === 'auto'"
             v-tooltip.top="'Auto Adapt Layout'"
             @click="setStrategy('auto')"
           >
-            <Bolt :size="16" />
+            <Bolt :size="16" aria-hidden="true" />
           </Button>
           <Button
             class="btn-layout"
             :class="{ active: strategyType === 'split' }"
+            aria-label="Dual-Pane Split Layout"
+            :aria-pressed="strategyType === 'split'"
             v-tooltip.top="'Dual-Pane Split'"
             @click="setStrategy('split')"
           >
-            <Columns2 :size="16" />
+            <Columns2 :size="16" aria-hidden="true" />
           </Button>
           <Button
             class="btn-layout"
             :class="{ active: strategyType === 'tabbed' }"
+            aria-label="Tabbed Single-Pane Layout"
+            :aria-pressed="strategyType === 'tabbed'"
             v-tooltip.top="'Tabbed Single-Pane'"
             @click="setStrategy('tabbed')"
           >
-            <Smartphone :size="16" />
+            <Smartphone :size="16" aria-hidden="true" />
           </Button>
         </div>
 
@@ -80,22 +87,24 @@
           v-if="shouldUseDrawerSettings"
           class="settings-toggle-btn"
           :class="{ active: isSettingsOpen }"
+          aria-label="Security Setup"
+          :aria-expanded="isSettingsOpen"
           v-tooltip.top="'Security Setup'"
           @click="toggleSettings"
         >
-          <Settings :size="16" />
+          <Settings :size="16" aria-hidden="true" />
         </Button>
       </div>
     </header>
 
-    <main class="app-body">
+    <main class="app-body" role="main">
       <transition name="drawer-fade">
-        <div v-if="shouldUseDrawerSettings && isSettingsOpen" class="settings-drawer-overlay" @click.self="closeSettings">
+        <div v-if="shouldUseDrawerSettings && isSettingsOpen" class="settings-drawer-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-drawer-title" @click.self="closeSettings">
           <div class="settings-drawer panel fade-in">
             <div class="drawer-header">
-              <h3><Sliders :size="16" /> Security Setup</h3>
-              <Button class="close-drawer-btn" v-tooltip.top="'Close Setup'" @click="closeSettings">
-                <X :size="16" />
+              <h3 id="settings-drawer-title"><Sliders :size="16" aria-hidden="true" /> Security Setup</h3>
+              <Button class="close-drawer-btn" aria-label="Close Security Setup" v-tooltip.top="'Close Setup'" @click="closeSettings">
+                <X :size="16" aria-hidden="true" />
               </Button>
             </div>
 
@@ -122,7 +131,7 @@
       </div>
 
       <div v-if="showSideBySide" class="dual-pane-container">
-        <div class="chat-pane panel">
+        <div class="chat-pane panel" role="region" aria-label="Chat Panel">
           <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" :pendingCount="pendingCount" />
           <MessageFeed
             :chatHistory="chatHistory"
@@ -131,13 +140,13 @@
           <MessageInput :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
         </div>
 
-        <div class="terminal-pane">
+        <div class="terminal-pane" role="region" aria-label="Payload Log Stream Panel">
           <CipherTerminal :debugHistory="debugHistory" />
         </div>
       </div>
 
       <div v-else class="tabbed-container">
-        <div v-show="activeTab === 'chat'" class="chat-pane panel">
+        <div v-show="activeTab === 'chat'" class="chat-pane panel" id="chat-tab-panel" role="tabpanel" aria-label="Chat Panel">
           <ModeBanner :isEncrypted="crypto.isEncrypted" :connectionStatus="connectionStatus" :pendingCount="pendingCount" />
           <MessageFeed
             :chatHistory="chatHistory"
@@ -146,31 +155,39 @@
           <MessageInput :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
         </div>
 
-        <div v-show="activeTab === 'terminal'" class="terminal-pane">
+        <div v-show="activeTab === 'terminal'" class="terminal-pane" id="terminal-tab-panel" role="tabpanel" aria-label="Payload Log Stream Panel">
           <CipherTerminal :debugHistory="debugHistory" />
         </div>
       </div>
     </main>
 
     <!-- Mobile Navigation Bar -->
-    <nav v-if="showTabNavigation" class="bottom-nav glass-panel">
+    <nav v-if="showTabNavigation" class="bottom-nav glass-panel" role="navigation" aria-label="Mobile main navigation">
       <button
         class="nav-tab"
         :class="{ active: activeTab === 'chat' }"
+        role="tab"
+        :aria-selected="activeTab === 'chat'"
+        aria-controls="chat-tab-panel"
+        aria-label="Chat tab"
         @click="setActiveTab('chat')"
       >
-        <MessageSquare :size="18" />
+        <MessageSquare :size="18" aria-hidden="true" />
         <span>Chat</span>
       </button>
 
       <button
         class="nav-tab"
         :class="{ active: activeTab === 'terminal' }"
+        role="tab"
+        :aria-selected="activeTab === 'terminal'"
+        aria-controls="terminal-tab-panel"
+        aria-label="Terminal log tab"
         @click="setActiveTab('terminal')"
       >
         <div class="tab-icon-wrapper">
-          <Terminal :size="18" />
-          <span v-if="unreadTerminalLogs > 0" class="unread-badge">{{ unreadTerminalLogs }}</span>
+          <Terminal :size="18" aria-hidden="true" />
+          <span v-if="unreadTerminalLogs > 0" class="unread-badge" aria-label="Unread terminal logs">{{ unreadTerminalLogs }}</span>
         </div>
         <span>Terminal</span>
       </button>
@@ -178,9 +195,12 @@
       <button
         class="nav-tab"
         :class="{ active: isSettingsOpen }"
+        role="tab"
+        :aria-selected="isSettingsOpen"
+        aria-label="Security setup keys tab"
         @click="toggleSettings"
       >
-        <Shield :size="18" />
+        <Shield :size="18" aria-hidden="true" />
         <span>Keys</span>
       </button>
     </nav>

@@ -1,8 +1,8 @@
 <template>
-  <div class="media-attachment-card">
-    <div v-if="isTransferring" class="transfer-progress">
+  <div class="media-attachment-card" role="region" aria-label="Media Attachment">
+    <div v-if="isTransferring" class="transfer-progress" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100" :aria-label="`Receiving ${fileName}: ${progress}%`">
       <div class="transfer-header">
-        <Download class="transfer-icon" :size="16" />
+        <Download class="transfer-icon" :size="16" aria-hidden="true" />
         <span class="file-name" :title="fileName">{{ fileName }}</span>
         <span class="file-size">({{ formattedSize }})</span>
       </div>
@@ -20,8 +20,8 @@
             <span class="media-file-name">{{ fileName }}</span>
             <span class="media-file-size">({{ formattedSize }})</span>
           </div>
-          <button @click="toggleReveal" class="reveal-button">
-            <Eye :size="14" /> Preview {{ isImage ? 'Image' : 'Video' }}
+          <button @click="toggleReveal" class="reveal-button" :aria-label="`Preview ${isImage ? 'image' : 'video'} ${fileName}`">
+            <Eye :size="14" aria-hidden="true" /> Preview {{ isImage ? 'Image' : 'Video' }}
           </button>
         </div>
 
@@ -29,35 +29,35 @@
           <div class="media-toolbar">
             <span class="media-file-name">{{ fileName }}</span>
             <div class="toolbar-actions">
-              <a :href="mediaUrl" :download="fileName" class="download-link" title="Download File">
-                <Download :size="14" /> Save
+              <a :href="mediaUrl" :download="fileName" class="download-link" title="Download File" :aria-label="`Save file ${fileName}`">
+                <Download :size="14" aria-hidden="true" /> Save
               </a>
-              <button @click="toggleReveal" class="hide-button" title="Hide Media">
-                <EyeOff :size="14" /> Hide
+              <button @click="toggleReveal" class="hide-button" title="Hide Media" :aria-label="`Hide preview ${fileName}`">
+                <EyeOff :size="14" aria-hidden="true" /> Hide
               </button>
             </div>
           </div>
 
           <div class="media-content">
-            <div v-if="hasLoadError" class="media-error-box">
+            <div v-if="hasLoadError" class="media-error-box" role="alert">
               ⚠️ Unable to render media preview. You can still download the file below.
             </div>
             <img v-else-if="isImage" :src="mediaUrl" :alt="fileName" class="embedded-image" @error="onMediaError" />
-            <video v-else-if="isVideo" :src="mediaUrl" controls preload="metadata" class="embedded-video" @error="onMediaError"></video>
+            <video v-else-if="isVideo" :src="mediaUrl" controls preload="metadata" class="embedded-video" :aria-label="`Video attachment ${fileName}`" @error="onMediaError"></video>
           </div>
         </div>
       </div>
 
       <div v-else class="generic-file-card">
         <div class="file-details">
-          <FileText class="file-type-icon" :size="20" />
+          <FileText class="file-type-icon" :size="20" aria-hidden="true" />
           <div class="file-info">
             <span class="file-title" :title="fileName">{{ fileName }}</span>
             <span class="file-meta">{{ formattedSize }} • {{ mimeType || 'Unknown format' }}</span>
           </div>
         </div>
-        <a :href="mediaUrl" :download="fileName" class="download-button">
-          <Download :size="14" /> Download
+        <a :href="mediaUrl" :download="fileName" class="download-button" :aria-label="`Download file ${fileName}`">
+          <Download :size="14" aria-hidden="true" /> Download
         </a>
       </div>
     </template>

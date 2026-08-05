@@ -1,13 +1,14 @@
 <template>
-  <div class="setup-container">
+  <div class="setup-container" role="region" aria-label="Security Setup Form">
     <div class="setup-bar panel" :class="{ 'compact-mode': compact }">
       <div class="field-group">
         <div class="input-wrapper">
-          <User class="input-icon" :size="16" />
+          <User class="input-icon" :size="16" aria-hidden="true" />
           <InputText
             :model-value="displayName"
             @update:model-value="$emit('update:displayName', $event ?? '')"
             placeholder="Display Name"
+            aria-label="Display Name"
             class="input-field"
             @input="$emit('inputStarted')"
           />
@@ -16,12 +17,13 @@
 
       <div class="field-group">
         <div class="input-wrapper">
-          <Lock class="input-icon" :size="16" />
+          <Lock class="input-icon" :size="16" aria-hidden="true" />
           <InputText
             :model-value="passwordInput"
             @update:model-value="$emit('update:passwordInput', $event ?? '')"
             type="text"
             placeholder="Passphrase (optional)"
+            aria-label="Passphrase (optional)"
             class="input-field"
             @keydown.enter="$emit('setupFinalized')"
             @blur="$emit('setupFinalized')"
@@ -37,6 +39,7 @@
           :options="cipherOptions"
           optionLabel="label"
           optionValue="value"
+          aria-label="Select encryption algorithm"
           class="dropdown-field"
         />
       </div>

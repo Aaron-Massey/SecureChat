@@ -1,40 +1,40 @@
 <template>
-  <div class="banner-wrapper">
-    <div v-if="connectionStatus === 'reconnecting'" class="mode-banner reconnecting-mode" role="status" aria-live="polite">
+  <div class="banner-wrapper" role="region" aria-label="System Connection and Encryption Status">
+    <div v-if="connectionStatus === 'reconnecting'" class="mode-banner reconnecting-mode" role="status" aria-live="polite" aria-label="Signaling Reconnecting">
       <div class="banner-header">
-        <RefreshCw class="banner-icon" :size="16" />
+        <RefreshCw class="banner-icon" :size="16" aria-hidden="true" />
         <strong>Signaling Reconnecting...</strong>
       </div>
       <span class="banner-subtext">Connection interrupted. Re-establishing connection...</span>
     </div>
 
-    <div v-else-if="connectionStatus === 'disconnected'" class="mode-banner disconnected-mode" role="status" aria-live="polite">
+    <div v-else-if="connectionStatus === 'disconnected'" class="mode-banner disconnected-mode" role="status" aria-live="polite" aria-label="Network Disconnected">
       <div class="banner-header">
-        <AlertTriangle class="banner-icon" :size="16" />
+        <AlertTriangle class="banner-icon" :size="16" aria-hidden="true" />
         <strong>Network Disconnected</strong>
       </div>
       <span class="banner-subtext">Signaling server unreachable. Retrying automatically...</span>
     </div>
 
-    <div v-if="pendingCount && pendingCount > 0" class="mode-banner pending-mode" role="status" aria-live="polite">
+    <div v-if="pendingCount && pendingCount > 0" class="mode-banner pending-mode" role="status" aria-live="polite" :aria-label="`${pendingCount} Outbound ${pendingCount === 1 ? 'Message' : 'Messages'} Queued`">
       <div class="banner-header">
-        <Clock class="banner-icon" :size="16" />
+        <Clock class="banner-icon" :size="16" aria-hidden="true" />
         <strong>{{ pendingCount }} Outbound {{ pendingCount === 1 ? 'Message' : 'Messages' }} Queued</strong>
       </div>
       <span class="banner-subtext">Connection offline. Outbound messages will send automatically when reconnected.</span>
     </div>
 
-    <div v-if="!isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite">
+    <div v-if="!isEncrypted" class="mode-banner plaintext-mode" role="status" aria-live="polite" aria-label="Plaintext Mode Active">
       <div class="banner-header">
-        <ShieldAlert class="banner-icon" :size="16" />
+        <ShieldAlert class="banner-icon" :size="16" aria-hidden="true" />
         <strong>Plaintext Mode Active</strong>
       </div>
       <span class="banner-subtext">Messages sent unencrypted. Enter a passphrase to encrypt.</span>
     </div>
 
-    <div v-else class="mode-banner encrypted-mode" role="status" aria-live="polite">
+    <div v-else class="mode-banner encrypted-mode" role="status" aria-live="polite" aria-label="End-to-End Encryption Enabled">
       <div class="banner-header">
-        <Shield class="banner-icon" :size="16" />
+        <Shield class="banner-icon" :size="16" aria-hidden="true" />
         <strong>End-to-End Encryption Enabled</strong>
       </div>
       <span class="banner-subtext">Messages and file transfers are encrypted.</span>

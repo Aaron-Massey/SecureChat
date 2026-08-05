@@ -1,30 +1,32 @@
 <template>
-  <div class="input-container">
+  <div class="input-container" role="region" aria-label="Message Input Area">
     <div class="toast-expand-wrapper" :class="{ 'is-expanded': !!fileError }">
       <div class="toast-expand-inner">
         <transition name="toast-fade">
-          <div v-if="fileError" class="file-error-toast" role="alert">
+          <div v-if="fileError" class="file-error-toast" role="alert" aria-live="assertive">
             <span class="toast-message">⚠️ {{ fileError }}</span>
-            <button type="button" class="toast-close-btn" @click="dismissToast" title="Dismiss notification">✕</button>
+            <button type="button" class="toast-close-btn" @click="dismissToast" title="Dismiss notification" aria-label="Dismiss error notification">✕</button>
           </div>
         </transition>
       </div>
     </div>
 
-    <div class="input-area panel">
+    <div class="input-area panel" role="form" aria-label="Send message input form">
       <input
         type="file"
         ref="fileInputRef"
         style="display: none"
+        aria-hidden="true"
         @change="handleFileSelected"
       />
 
       <Button
         class="p-button-secondary file-attach-btn"
         title="Attach File (Max 25 MB)"
+        aria-label="Attach File (Max 25 MB)"
         @click="triggerFilePicker"
       >
-        <Paperclip :size="16" />
+        <Paperclip :size="16" aria-hidden="true" />
       </Button>
 
       <InputText
@@ -32,15 +34,21 @@
         v-model="textInput"
         @keyup.enter="handleSend"
         placeholder="Type a message..."
+        aria-label="Message text input"
         class="chat-text-input"
       />
 
       <div
         v-if="quotaMax && quotaMax > 0"
         class="quota-indicator-wrapper"
+        role="meter"
+        :aria-valuenow="quotaUsed || 0"
+        aria-valuemin="0"
+        :aria-valuemax="quotaMax"
+        :aria-label="`Message Quota: ${quotaUsed || 0} of ${quotaMax} messages used`"
         v-tooltip.top="`Message Quota: ${quotaUsed || 0} / ${quotaMax} messages used in 1-min window`"
       >
-        <svg class="quota-ring" width="22" height="22" viewBox="0 0 24 24">
+        <svg class="quota-ring" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
           <circle
             cx="12"
             cy="12"
@@ -67,9 +75,10 @@
 
       <Button
         class="send-btn"
+        aria-label="Send message"
         @click="handleSend"
       >
-        <Send :size="16" style="margin-right: 0.375rem" />
+        <Send :size="16" style="margin-right: 0.375rem" aria-hidden="true" />
         Send
       </Button>
     </div>

@@ -1,25 +1,25 @@
 <template>
-  <div class="debug-pane panel">
+  <div class="debug-pane panel" role="region" aria-label="Payload Log Stream Panel">
     <div class="terminal-header">
-      <div class="window-controls">
+      <div class="window-controls" aria-hidden="true">
         <span class="control-dot red"></span>
         <span class="control-dot yellow"></span>
         <span class="control-dot green"></span>
       </div>
       <div class="terminal-title">
-        <Terminal class="terminal-icon" :size="14" />
+        <Terminal class="terminal-icon" :size="14" aria-hidden="true" />
         <span>PAYLOAD LOG STREAM</span>
       </div>
       <div class="terminal-actions">
-        <button class="action-btn" title="Clear Terminal Logs" @click="clearLogs">
-          <Trash2 :size="14" />
+        <button class="action-btn" title="Clear Terminal Logs" aria-label="Clear payload terminal logs" @click="clearLogs">
+          <Trash2 :size="14" aria-hidden="true" />
         </button>
       </div>
     </div>
 
-    <div class="terminal-feed" ref="debugFeedRef">
-      <div v-if="filteredDebugHistory.length === 0" class="empty-terminal">
-        <span class="blink-cursor">></span> Ready for traffic...
+    <div class="terminal-feed" ref="debugFeedRef" role="log" aria-live="polite" aria-label="Payload log stream traffic">
+      <div v-if="filteredDebugHistory.length === 0" class="empty-terminal" aria-label="Terminal ready for traffic">
+        <span class="blink-cursor" aria-hidden="true">></span> Ready for traffic...
       </div>
 
       <div
@@ -27,10 +27,12 @@
         :key="index"
         class="payload-card"
         :class="payload.cipher === 'none' ? 'plaintext-card' : 'encrypted-card'"
+        role="article"
+        :aria-label="`Payload entry ${index + 1}: ${payload.cipher} from ${payload.senderDisplayName || 'Unknown'}`"
       >
         <div class="payload-header">
           <div class="meta-tags">
-            <span class="cipher-badge" :class="payload.cipher">
+            <span class="cipher-badge" :class="payload.cipher" :aria-label="`Cipher mode: ${payload.cipher}`">
               {{ payload.cipher === 'none' ? 'PLAINTEXT' : payload.cipher.toUpperCase() }}
             </span>
             <span class="sender-tag">User: {{ payload.senderDisplayName || 'Unknown' }}</span>
@@ -38,8 +40,8 @@
           </div>
           <div class="header-right">
             <span class="timestamp-tag">{{ payload.timestamp }}</span>
-            <button class="copy-btn" title="Copy raw payload JSON" @click="copyPayload(payload)">
-              <Copy :size="14" />
+            <button class="copy-btn" title="Copy raw payload JSON" aria-label="Copy raw payload JSON" @click="copyPayload(payload)">
+              <Copy :size="14" aria-hidden="true" />
             </button>
           </div>
         </div>

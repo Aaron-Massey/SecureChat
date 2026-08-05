@@ -1,5 +1,5 @@
 <template>
-  <div class="feed-container">
+  <div class="feed-container" role="region" aria-label="Message Feed Container">
     <div class="controls-bar">
       <div class="checkbox-wrapper">
         <Checkbox
@@ -7,6 +7,7 @@
           @update:model-value="$emit('update:showUndecrypted', $event)"
           :binary="true"
           id="show-undecrypted-chk"
+          aria-label="Show undecryptable payloads"
         />
         <label for="show-undecrypted-chk" class="chk-label" @click.prevent="$emit('update:showUndecrypted', !showUndecrypted)">
           Show undecryptable payloads
@@ -14,9 +15,9 @@
       </div>
     </div>
 
-    <div class="message-feed" ref="feedRef">
-      <div v-if="filteredChatHistory.length === 0" class="empty-feed">
-        <MessageSquare class="empty-icon" :size="36" />
+    <div class="message-feed" ref="feedRef" role="log" aria-live="polite" aria-label="Chat messages history">
+      <div v-if="filteredChatHistory.length === 0" class="empty-feed" aria-label="No messages in feed">
+        <MessageSquare class="empty-icon" :size="36" aria-hidden="true" />
         <span>No messages yet.</span>
       </div>
 
@@ -25,11 +26,14 @@
         :key="msg.id || index"
         class="message-wrapper fade-in"
         :class="{ 'undecrypted': !msg.decrypted, 'system-wrapper': isSystemMessage(msg) }"
+        role="article"
+        :aria-label="`Message from ${msg.sender} at ${msg.timestamp}`"
       >
         <div
           class="avatar-icon"
           :class="{ 'system-avatar': isSystemMessage(msg) }"
           :style="getAvatarStyle(msg)"
+          aria-hidden="true"
         >
           <ServerCog v-if="isSystemMessage(msg)" :size="16" />
           <template v-else>{{ getAvatarInitial(msg.sender) }}</template>
@@ -39,10 +43,10 @@
           <div class="bubble-header">
             <div class="sender-info">
               <span class="sender-name" :style="getSenderNameStyle(msg)">{{ msg.sender }}</span>
-              <span v-if="isSystemMessage(msg)" class="system-badge">SYSTEM</span>
-              <span v-if="msg.isPending" class="pending-badge" title="Queued offline message"><Clock :size="12" /> Queued</span>
+              <span v-if="isSystemMessage(msg)" class="system-badge" aria-label="System notification">SYSTEM</span>
+              <span v-if="msg.isPending" class="pending-badge" title="Queued offline message" aria-label="Queued offline message"><Clock :size="12" aria-hidden="true" /> Queued</span>
             </div>
-            <span class="timestamp">{{ msg.timestamp }}</span>
+            <span class="timestamp" :aria-label="`Sent at ${msg.timestamp}`">{{ msg.timestamp }}</span>
           </div>
 
           <div class="message-text" v-if="msg.text">
@@ -59,8 +63,8 @@
             :is-transferring="msg.fileAttachment.isTransferring || false"
           />
 
-          <div v-if="!msg.decrypted" class="undecrypted-badge">
-            <Lock :size="14" /> Undecryptable Payload
+          <div v-if="!msg.decrypted" class="undecrypted-badge" role="status" aria-label="Undecryptable payload">
+            <Lock :size="14" aria-hidden="true" /> Undecryptable Payload
           </div>
         </div>
       </div>
