@@ -44,7 +44,7 @@
             </div>
             <img v-else-if="isImage" :src="mediaUrl" :alt="fileName" class="embedded-image" @error="onMediaError" />
             <video v-else-if="isVideo" :src="mediaUrl" controls preload="metadata" class="embedded-video" :aria-label="`Video attachment ${fileName}`" @error="onMediaError"></video>
-            <audio v-else-if="isAudio" :src="mediaUrl" controls preload="metadata" class="embedded-audio" :aria-label="`Audio attachment ${fileName}`" @error="onMediaError"></audio>
+            <AudioPlayer v-else-if="isAudio" :src="mediaUrl" :file-name="fileName" @error="onMediaError" />
           </div>
         </div>
       </div>
@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
 import { Download, Eye, EyeOff, FileText } from '@lucide/vue';
+import AudioPlayer from './AudioPlayer.vue';
 import { formatFileSize, revokeObjectUrl } from '@/utils/fileChunker';
 
 const props = withDefaults(

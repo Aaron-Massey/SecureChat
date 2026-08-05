@@ -1,7 +1,7 @@
 import CryptoJS from 'crypto-js';
 
 export const DEFAULT_CHUNK_SIZE = 64 * 1024; // 64 KB
-export const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
 export interface FileChunk {
   chunkIndex: number;

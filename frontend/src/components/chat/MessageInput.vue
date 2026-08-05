@@ -22,8 +22,8 @@
 
       <Button
         class="p-button-secondary file-attach-btn"
-        title="Attach File (Max 25 MB)"
-        aria-label="Attach File (Max 25 MB)"
+        title="Attach File (Max 100 MB)"
+        aria-label="Attach File (Max 100 MB)"
         @click="triggerFilePicker"
       >
         <Paperclip :size="16" aria-hidden="true" />
@@ -165,7 +165,7 @@ const handleFileSelected = (event: Event) => {
   if (!file) return;
 
   if (file.size > MAX_FILE_SIZE) {
-    showFileToast(`File "${file.name}" (${formatFileSize(file.size)}) exceeds maximum size of 25 MB.`);
+    showFileToast(`File "${file.name}" (${formatFileSize(file.size)}) exceeds maximum size of 100 MB.`);
     target.value = '';
     return;
   }
@@ -195,6 +195,11 @@ onUnmounted(() => {
   if (toastTimeout) {
     clearTimeout(toastTimeout);
   }
+});
+
+defineExpose({
+  showFileToast,
+  dismissToast
 });
 </script>
 

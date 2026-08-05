@@ -12,7 +12,9 @@ import {
   base64ToArrayBuffer,
   computeBufferHash,
   createObjectUrlFromBuffers,
-  DEFAULT_CHUNK_SIZE
+  DEFAULT_CHUNK_SIZE,
+  MAX_FILE_SIZE,
+  formatFileSize
 } from '@/utils/fileChunker';
 
 export interface ChatMessage {
@@ -331,6 +333,17 @@ export function useP2P() {
   };
 
   const sendP2PFile = async (file: File, senderDisplayName: string): Promise<void> => {
+    if (file.size > MAX_FILE_SIZE) {
+      chatHistory.value.push({
+        sender: 'System',
+        text: `File "${file.name}" (${formatFileSize(file.size)}) exceeds maximum allowed size of 100 MB.`,
+        decrypted: true,
+        isSystem: true,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      return;
+    }
+
     if (!rateLimiter.isAllowed()) {
       updateQuota();
       chatHistory.value.push({

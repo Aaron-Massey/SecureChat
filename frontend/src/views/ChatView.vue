@@ -12,7 +12,7 @@
         <div class="drag-drop-card fade-in">
           <UploadCloud class="drag-drop-icon" :size="48" aria-hidden="true" />
           <h2>Drop file to send</h2>
-          <p>Peer-to-peer transfer (max 25 MB)</p>
+          <p>Peer-to-peer transfer (max 100 MB)</p>
         </div>
       </div>
     </transition>
@@ -137,7 +137,7 @@
             :chatHistory="chatHistory"
             v-model:showUndecrypted="showUndecrypted"
           />
-          <MessageInput :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
+          <MessageInput ref="messageInputRef" :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
         </div>
 
         <div class="terminal-pane" role="region" aria-label="Payload Log Stream Panel">
@@ -152,7 +152,7 @@
             :chatHistory="chatHistory"
             v-model:showUndecrypted="showUndecrypted"
           />
-          <MessageInput :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
+          <MessageInput ref="messageInputRefTabbed" :quota-used="quotaUsed" :quota-max="quotaMax" @send="sendMessage" @sendFile="handleSendFile" />
         </div>
 
         <div v-show="activeTab === 'terminal'" class="terminal-pane" id="terminal-tab-panel" role="tabpanel" aria-label="Payload Log Stream Panel">
@@ -348,8 +348,21 @@ const sendMessage = (text: string) => {
   sendP2PMessage(text, nameToUse);
 };
 
+import { MAX_FILE_SIZE, formatFileSize } from '@/utils/fileChunker';
+
+const messageInputRef = ref<{ showFileToast: (msg: string) => void } | null>(null);
+const messageInputRefTabbed = ref<{ showFileToast: (msg: string) => void } | null>(null);
+
 const handleSendFile = (file: File) => {
   if (!file) return;
+
+  if (file.size > MAX_FILE_SIZE) {
+    const errorMsg = `File "${file.name}" (${formatFileSize(file.size)}) exceeds maximum size of 100 MB.`;
+    messageInputRef.value?.showFileToast(errorMsg);
+    messageInputRefTabbed.value?.showFileToast(errorMsg);
+    return;
+  }
+
   const nameToUse = displayName.value.trim() || 'Anonymous';
   sendP2PFile(file, nameToUse);
 };
