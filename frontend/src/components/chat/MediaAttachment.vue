@@ -16,12 +16,12 @@
       <div v-if="isMedia" class="media-preview-wrapper">
         <div v-if="!isRevealed" class="media-overlay">
           <div class="media-meta">
-            <span class="media-type-badge">{{ isImage ? 'IMAGE' : 'VIDEO' }}</span>
+            <span class="media-type-badge">{{ isImage ? 'IMAGE' : isVideo ? 'VIDEO' : 'AUDIO' }}</span>
             <span class="media-file-name">{{ fileName }}</span>
             <span class="media-file-size">({{ formattedSize }})</span>
           </div>
-          <button @click="toggleReveal" class="reveal-button" :aria-label="`Preview ${isImage ? 'image' : 'video'} ${fileName}`">
-            <Eye :size="14" aria-hidden="true" /> Preview {{ isImage ? 'Image' : 'Video' }}
+          <button @click="toggleReveal" class="reveal-button" :aria-label="`Preview ${isImage ? 'image' : isVideo ? 'video' : 'audio'} ${fileName}`">
+            <Eye :size="14" aria-hidden="true" /> Preview {{ isImage ? 'Image' : isVideo ? 'Video' : 'Audio' }}
           </button>
         </div>
 
@@ -44,6 +44,7 @@
             </div>
             <img v-else-if="isImage" :src="mediaUrl" :alt="fileName" class="embedded-image" @error="onMediaError" />
             <video v-else-if="isVideo" :src="mediaUrl" controls preload="metadata" class="embedded-video" :aria-label="`Video attachment ${fileName}`" @error="onMediaError"></video>
+            <audio v-else-if="isAudio" :src="mediaUrl" controls preload="metadata" class="embedded-audio" :aria-label="`Audio attachment ${fileName}`" @error="onMediaError"></audio>
           </div>
         </div>
       </div>
@@ -89,7 +90,8 @@ const hasLoadError = ref(false);
 
 const isImage = computed(() => props.mimeType.startsWith('image/'));
 const isVideo = computed(() => props.mimeType.startsWith('video/'));
-const isMedia = computed(() => isImage.value || isVideo.value);
+const isAudio = computed(() => props.mimeType.startsWith('audio/'));
+const isMedia = computed(() => isImage.value || isVideo.value || isAudio.value);
 const formattedSize = computed(() => formatFileSize(props.fileSize));
 
 const toggleReveal = () => {
@@ -265,6 +267,14 @@ onUnmounted(() => {
   max-width: 100%;
   max-height: 20rem;
   border-radius: var(--radius-md);
+  display: block;
+}
+
+.embedded-audio {
+  width: 100%;
+  max-width: 24rem;
+  border-radius: var(--radius-md);
+  outline: none;
   display: block;
 }
 
