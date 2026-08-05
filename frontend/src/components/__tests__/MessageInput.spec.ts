@@ -14,14 +14,15 @@ const defaultGlobal = {
 };
 
 describe('MessageInput', () => {
-  it('renders input field, paperclip attachment button, and send button', () => {
+  it('renders input field, paperclip attachment button, voice record button, and send button', () => {
     const wrapper = mount(MessageInput, {
       global: defaultGlobal
     });
 
     expect(wrapper.find('input[type="file"]').exists()).toBe(true);
     expect(wrapper.findComponent(InputText).exists()).toBe(true);
-    expect(wrapper.findAllComponents(Button).length).toBe(2);
+    expect(wrapper.findAllComponents(Button).length).toBe(3);
+    expect(wrapper.find('.voice-record-btn').exists()).toBe(true);
   });
 
   it('renders message quota indicator when quotaMax is passed', () => {
@@ -42,8 +43,8 @@ describe('MessageInput', () => {
     const textInput = wrapper.findComponent(InputText);
     await textInput.setValue('Hello SecureChat!');
 
-    const sendBtn = wrapper.findAllComponents(Button)[1];
-    await sendBtn!.trigger('click');
+    const sendBtn = wrapper.find('.send-btn');
+    await sendBtn.trigger('click');
 
     expect(wrapper.emitted('send')).toBeTruthy();
     expect(wrapper.emitted('send')![0]).toEqual(['Hello SecureChat!']);
@@ -57,8 +58,8 @@ describe('MessageInput', () => {
     const textInput = wrapper.findComponent(InputText);
     await textInput.setValue('   ');
 
-    const sendBtn = wrapper.findAllComponents(Button)[1];
-    await sendBtn!.trigger('click');
+    const sendBtn = wrapper.find('.send-btn');
+    await sendBtn.trigger('click');
 
     expect(wrapper.emitted('send')).toBeFalsy();
   });
