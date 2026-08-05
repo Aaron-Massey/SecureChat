@@ -230,7 +230,3 @@ npm run server:update
 Add `SERVER_HOST`, `SERVER_USER`, and `SERVER_SSH_KEY` to your repository Secrets on GitHub. Pushing to `main` will automatically build Docker images and deploy updates to your remote server.
 
 ---
-
-## License
-
-ISC License - created by Aaron Massey.
