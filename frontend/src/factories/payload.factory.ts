@@ -86,4 +86,32 @@ export class PayloadFactory {
       timestamp
     };
   }
+
+  /**
+   * Creates a file cancel SecurePayload.
+   */
+  public static createFileCancelPayload(
+    senderDisplayName: string,
+    fileId: string,
+    reason: string = 'File transfer cancelled',
+    timestamp: string = new Date().toLocaleTimeString(),
+    senderSessionId?: string
+  ): SecurePayload {
+    return {
+      senderDisplayName,
+      senderSessionId,
+      plaintext: reason,
+      cipher: 'none',
+      type: 'file-cancel',
+      fileMetadata: {
+        fileId,
+        fileName: '',
+        fileSize: 0,
+        mimeType: '',
+        totalChunks: 0,
+        chunkSize: 0
+      },
+      timestamp
+    };
+  }
 }

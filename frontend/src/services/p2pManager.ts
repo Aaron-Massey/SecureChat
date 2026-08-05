@@ -12,6 +12,7 @@ export interface P2PManagerCallbacks {
   onFileHeaderReceived?: (payload: SecurePayload) => void;
   onFileChunkReceived?: (payload: SecurePayload, receivedChunks: number, totalChunks: number) => void;
   onFileTransferComplete?: (fileId: string, headerPayload: SecurePayload, chunkPayloads: SecurePayload[]) => void;
+  onFileTransferCancelled?: (fileId: string, reason: string) => void;
 }
 
 export class P2PManager {
@@ -25,6 +26,9 @@ export class P2PManager {
     header: SecurePayload;
     chunks: Map<number, SecurePayload>;
   }> = new Map();
+  private rejectedFileIds: Set<string> = new Set();
+  private cancelledFileIds: Set<string> = new Set();
+  private cancelledPeersPerFile: Map<string, Set<string>> = new Map();
   private iceCandidateQueues: Map<string, RTCIceCandidateInit[]> = new Map();
   private iceRestartAttempts: Map<string, number> = new Map();
 
@@ -264,6 +268,8 @@ export class P2PManager {
           this.handleIncomingFileHeader(payload);
         } else if (payload.type === 'file-chunk') {
           this.handleIncomingFileChunk(payload);
+        } else if (payload.type === 'file-cancel') {
+          this.handleIncomingFileCancel(payload);
         } else {
           this.callbacks.onMessageReceived(payload);
         }
@@ -288,6 +294,12 @@ export class P2PManager {
   private handleIncomingFileChunk(payload: SecurePayload): void {
     if (!payload.chunkMetadata) return;
     const { fileId, chunkIndex, totalChunks } = payload.chunkMetadata;
+
+    if (this.rejectedFileIds.has(fileId)) {
+      // Fail-Fast: Drop chunk immediately without allocating memory or processing
+      return;
+    }
+
     const fileEntry = this.incomingFileBuffers.get(fileId);
 
     if (fileEntry) {
@@ -307,6 +319,40 @@ export class P2PManager {
         this.incomingFileBuffers.delete(fileId);
       }
     }
+  }
+
+  private handleIncomingFileCancel(payload: SecurePayload): void {
+    const fileId = payload.fileMetadata?.fileId;
+    const peerId = payload.senderSessionId;
+    if (fileId) {
+      this.cancelledFileIds.add(fileId);
+      if (peerId) {
+        if (!this.cancelledPeersPerFile.has(fileId)) {
+          this.cancelledPeersPerFile.set(fileId, new Set());
+        }
+        this.cancelledPeersPerFile.get(fileId)!.add(peerId);
+      }
+      this.incomingFileBuffers.delete(fileId);
+      this.callbacks.onFileTransferCancelled?.(fileId, payload.plaintext || 'File transfer cancelled');
+    }
+    this.callbacks.onMessageReceived(payload);
+  }
+
+  public rejectFileTransfer(fileId: string): void {
+    this.rejectedFileIds.add(fileId);
+    this.incomingFileBuffers.delete(fileId);
+  }
+
+  public isRejectedFile(fileId: string): boolean {
+    return this.rejectedFileIds.has(fileId);
+  }
+
+  public isCancelledFile(fileId: string): boolean {
+    return this.cancelledFileIds.has(fileId);
+  }
+
+  public isCancelledByPeer(fileId: string, peerId: string): boolean {
+    return Boolean(this.cancelledPeersPerFile.get(fileId)?.has(peerId));
   }
 
   public get socketId(): string {
@@ -336,10 +382,17 @@ export class P2PManager {
       payload.senderSessionId = this.socketId;
     }
     const messageString = JSON.stringify(payload);
+    const fileId = payload.chunkMetadata?.fileId;
 
-    const sendPromises = Array.from(this.dataChannels.values()).map((channel) => {
+    const sendPromises = Array.from(this.dataChannels.entries()).map(([peerId, channel]) => {
       return new Promise<void>((resolve) => {
         if (channel.readyState !== 'open') {
+          resolve();
+          return;
+        }
+
+        // Per-Peer Filter: Skip sending chunk if this specific peer cancelled this fileId
+        if (fileId && this.cancelledPeersPerFile.get(fileId)?.has(peerId)) {
           resolve();
           return;
         }
@@ -369,8 +422,18 @@ export class P2PManager {
     headerPayload: SecurePayload,
     chunkPayloads: SecurePayload[]
   ): Promise<void> {
+    const fileId = headerPayload.fileMetadata?.fileId;
     this.broadcastMessage(headerPayload);
+
     for (const chunkPayload of chunkPayloads) {
+      if (fileId) {
+        const cancelledPeers = this.cancelledPeersPerFile.get(fileId);
+        // Abort global loop ONLY if ALL active data channels have cancelled this file
+        if (cancelledPeers && cancelledPeers.size > 0 && cancelledPeers.size >= this.dataChannels.size) {
+          console.warn(`All connected peers cancelled file ${fileId}. Aborting chunk transmission.`);
+          break;
+        }
+      }
       await this.broadcastChunkWithBackpressure(chunkPayload);
     }
   }

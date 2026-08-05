@@ -121,12 +121,23 @@ export function useP2P() {
       }
     }
 
+    if (!isHeaderDecrypted) {
+      // Fail-Fast: Reject transfer immediately and notify sender
+      p2pManager.rejectFileTransfer(meta.fileId);
+      const cancelPayload = PayloadFactory.createFileCancelPayload(
+        'System',
+        meta.fileId,
+        `Key verification failed for file "${meta.fileName}"`
+      );
+      p2pManager.broadcastMessage(cancelPayload);
+    }
+
     chatHistory.value.push({
       id: meta.fileId,
       sender: headerPayload.senderDisplayName,
       senderSessionId: headerPayload.senderSessionId,
       decrypted: isHeaderDecrypted,
-      text: isHeaderDecrypted ? undefined : `⚠️ Key verification failed for file "${meta.fileName}"`,
+      text: isHeaderDecrypted ? undefined : `⚠️ Key verification failed for file "${meta.fileName}" (Transfer rejected immediately)`,
       timestamp,
       fileAttachment: {
         fileId: meta.fileId,
@@ -134,7 +145,7 @@ export function useP2P() {
         fileSize: meta.fileSize,
         mimeType: meta.mimeType,
         progress: 0,
-        isTransferring: true
+        isTransferring: isHeaderDecrypted
       }
     });
   };
@@ -145,10 +156,51 @@ export function useP2P() {
     totalChunks: number
   ) => {
     if (!_chunkPayload.chunkMetadata) return;
-    const { fileId } = _chunkPayload.chunkMetadata;
+    const { fileId, chunkIndex } = _chunkPayload.chunkMetadata;
     const msg = chatHistory.value.find((m) => m.fileAttachment?.fileId === fileId);
+
+    // Fail-Fast check on Chunk 0 if encrypted
+    if (chunkIndex === 0 && _chunkPayload.cipher !== 'none') {
+      let chunk0Valid = true;
+      if (!cryptoStore.isReady || !_chunkPayload.ciphertext) {
+        chunk0Valid = false;
+      } else {
+        const decryptRes = cryptoStore.decryptMessage(_chunkPayload);
+        if (!decryptRes.success) {
+          chunk0Valid = false;
+        }
+      }
+
+      if (!chunk0Valid) {
+        p2pManager.rejectFileTransfer(fileId);
+        const cancelPayload = PayloadFactory.createFileCancelPayload(
+          'System',
+          fileId,
+          `Key verification failed on chunk 0`
+        );
+        p2pManager.broadcastMessage(cancelPayload);
+
+        if (msg && msg.fileAttachment) {
+          msg.decrypted = false;
+          msg.fileAttachment.isTransferring = false;
+          msg.fileAttachment.progress = 0;
+          msg.text = `⚠️ Key verification failed on chunk 0 for file "${msg.fileAttachment.fileName}" (Transfer rejected immediately)`;
+        }
+        return;
+      }
+    }
+
     if (msg && msg.fileAttachment) {
       msg.fileAttachment.progress = Math.round((receivedChunks / totalChunks) * 100);
+    }
+  };
+
+  const handleFileTransferCancelled = (fileId: string, reason: string) => {
+    const msg = chatHistory.value.find((m) => m.fileAttachment?.fileId === fileId);
+    if (msg && msg.fileAttachment) {
+      msg.fileAttachment.isTransferring = false;
+      msg.decrypted = false;
+      msg.text = `⚠️ File transfer cancelled (${reason})`;
     }
   };
 
@@ -256,7 +308,8 @@ export function useP2P() {
     onConnectionStatusChange: handleConnectionStatusChange,
     onFileHeaderReceived: handleFileHeaderReceived,
     onFileChunkReceived: handleFileChunkReceived,
-    onFileTransferComplete: handleFileTransferComplete
+    onFileTransferComplete: handleFileTransferComplete,
+    onFileTransferCancelled: handleFileTransferCancelled
   }, iceConfig);
 
   const sendP2PMessage = (plaintext: string, senderDisplayName: string) => {
