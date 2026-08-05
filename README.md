@@ -167,7 +167,7 @@ SecureChat includes unit and integration tests written with [Vitest](https://vit
 
 ---
 
-## Docker Containerization
+## Docker Containerization & Cloudflare Tunnel
 
 1. **Build and Run Containers**:
    ```bash
@@ -175,7 +175,18 @@ SecureChat includes unit and integration tests written with [Vitest](https://vit
    ```
    *Syncs `.env` parameters and launches frontend (nginx) and backend containers via Docker Compose.*
 
-2. **Export Images for Remote Deployment**:
+2. **Cloudflare Tunnel (`cloudflared`) Container Routing**:
+   If you run `cloudflared` in a container on your server:
+   - Both `frontend` and `backend` containers join an external Docker network specified by `DOCKER_NETWORK` in `.env` (default: `cloudflared`).
+   - Create the external network on your server if it does not already exist:
+     ```bash
+     docker network create cloudflared
+     ```
+   - In your Cloudflare Zero Trust / Cloudflare Tunnel configuration, route your domain/subdomains to container service names on the shared network:
+     - **Frontend Web UI**: `http://frontend:80` (or `https://frontend:443`)
+     - **Signaling Backend**: `http://backend:3000` (or `https://backend:3000`)
+
+3. **Export Images for Remote Deployment**:
    ```bash
    npm run docker:export
    ```

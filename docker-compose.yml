@@ -8,6 +8,9 @@ services:
       - "${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}"
     volumes:
       - ./certs:/app/certs:ro
+    networks:
+      - default
+      - cloudflared_net
 
   frontend:
     image: securechat-frontend:latest
@@ -21,3 +24,13 @@ services:
       - "443:443"
     volumes:
       - ./certs:/etc/nginx/certs:ro
+    networks:
+      - default
+      - cloudflared_net
+
+networks:
+  default:
+    driver: bridge
+  cloudflared_net:
+    name: ${DOCKER_NETWORK:-tunnel_network}
+    external: true

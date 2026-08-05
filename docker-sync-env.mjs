@@ -30,6 +30,7 @@ if (existsSync(envPath)) {
 // Ensure non-sensitive default ports and limits are in .env if missing
 if (!envMap.has('FRONTEND_PORT')) envMap.set('FRONTEND_PORT', config.FRONTEND_PORT || 5173);
 if (!envMap.has('BACKEND_PORT')) envMap.set('BACKEND_PORT', config.BACKEND_PORT || 3000);
+if (!envMap.has('DOCKER_NETWORK')) envMap.set('DOCKER_NETWORK', 'cloudflared');
 if (!envMap.has('VITE_MAX_QUEUE_SIZE')) envMap.set('VITE_MAX_QUEUE_SIZE', config.MAX_QUEUE_SIZE || 50);
 if (!envMap.has('VITE_MAX_MESSAGES_PER_MINUTE')) envMap.set('VITE_MAX_MESSAGES_PER_MINUTE', config.MAX_MESSAGES_PER_MINUTE || 30);
 
