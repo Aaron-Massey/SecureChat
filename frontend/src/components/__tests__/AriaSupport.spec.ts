@@ -5,6 +5,7 @@ import SetupBar from '../chat/SetupBar.vue';
 import MessageInput from '../chat/MessageInput.vue';
 import CipherTerminal from '../chat/CipherTerminal.vue';
 import MediaAttachment from '../chat/MediaAttachment.vue';
+import AudioPlayer from '../chat/AudioPlayer.vue';
 
 describe('ARIA Accessibility Support', () => {
   it('renders ARIA attributes correctly in ModeBanner', () => {
@@ -87,5 +88,30 @@ describe('ARIA Accessibility Support', () => {
     expect(progressBar.attributes('aria-valuenow')).toBe('45');
     expect(progressBar.attributes('aria-valuemin')).toBe('0');
     expect(progressBar.attributes('aria-valuemax')).toBe('100');
+  });
+
+  it('renders ARIA attributes correctly in AudioPlayer controls and sliders', () => {
+    const wrapper = mount(AudioPlayer, {
+      props: {
+        src: 'blob:http://localhost/dummy-audio',
+        fileName: 'sample_audio.mp3'
+      }
+    });
+
+    expect(wrapper.attributes('role')).toBe('region');
+    expect(wrapper.attributes('aria-label')).toBe('Audio player for sample_audio.mp3');
+
+    const playBtn = wrapper.find('.play-pause-btn');
+    expect(playBtn.attributes('aria-label')).toBe('Play audio');
+    expect(playBtn.attributes('aria-pressed')).toBe('false');
+
+    const scrubber = wrapper.find('.audio-scrubber');
+    expect(scrubber.attributes('aria-valuenow')).toBe('0');
+    expect(scrubber.attributes('aria-valuemin')).toBe('0');
+
+    const volumeSlider = wrapper.find('.volume-slider');
+    expect(volumeSlider.attributes('aria-valuenow')).toBe('100');
+    expect(volumeSlider.attributes('aria-valuemin')).toBe('0');
+    expect(volumeSlider.attributes('aria-valuemax')).toBe('100');
   });
 });

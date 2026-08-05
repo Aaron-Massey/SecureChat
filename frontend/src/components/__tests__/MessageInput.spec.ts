@@ -63,7 +63,7 @@ describe('MessageInput', () => {
     expect(wrapper.emitted('send')).toBeFalsy();
   });
 
-  it('emits sendFile event when a valid file under 25 MB is attached', async () => {
+  it('emits sendFile event when a valid file under 100 MB is attached', async () => {
     const wrapper = mount(MessageInput, {
       global: defaultGlobal
     });
@@ -81,7 +81,7 @@ describe('MessageInput', () => {
     expect(wrapper.emitted('sendFile')![0]![0]).toBe(validFile);
   });
 
-  it('displays error message and rejects files exceeding 25 MB', async () => {
+  it('displays error message and rejects files exceeding 100 MB', async () => {
     const wrapper = mount(MessageInput, {
       global: defaultGlobal
     });
@@ -97,6 +97,17 @@ describe('MessageInput', () => {
     await fileInput.trigger('change');
 
     expect(wrapper.emitted('sendFile')).toBeFalsy();
-    expect(wrapper.text()).toContain('exceeds maximum size of 25 MB');
+    expect(wrapper.text()).toContain('exceeds maximum size of 100 MB');
+  });
+
+  it('displays error toast when showFileToast is called via ref component method', async () => {
+    const wrapper = mount(MessageInput, {
+      global: defaultGlobal
+    });
+
+    (wrapper.vm as unknown as { showFileToast: (msg: string) => void }).showFileToast('File "dropped.zip" (120.0 MB) exceeds maximum size of 100 MB.');
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain('File "dropped.zip" (120.0 MB) exceeds maximum size of 100 MB.');
   });
 });

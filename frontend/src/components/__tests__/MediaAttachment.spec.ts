@@ -54,11 +54,11 @@ describe('MediaAttachment', () => {
     });
 
     expect(wrapper.text()).toContain('Preview Audio');
-    expect(wrapper.find('audio').exists()).toBe(false);
+    expect(wrapper.find('.custom-audio-player').exists()).toBe(false);
 
     // Reveal audio player
     await wrapper.find('.reveal-button').trigger('click');
-    expect(wrapper.find('audio').exists()).toBe(true);
+    expect(wrapper.find('.custom-audio-player').exists()).toBe(true);
     expect(wrapper.find('audio').attributes('src')).toBe('blob:http://localhost/dummy-audio');
   });
 
