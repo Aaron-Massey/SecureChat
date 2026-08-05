@@ -62,6 +62,29 @@ describe('MediaAttachment', () => {
     expect(wrapper.find('audio').attributes('src')).toBe('blob:http://localhost/dummy-audio');
   });
 
+  it('detects audio-only WebM files and switches from video to AudioPlayer', async () => {
+    const wrapper = mount(MediaAttachment, {
+      props: {
+        fileName: 'music.webm',
+        fileSize: 1024 * 1024,
+        mimeType: 'video/webm',
+        mediaUrl: 'blob:http://localhost/dummy-webm-audio'
+      }
+    });
+
+    await wrapper.find('.reveal-button').trigger('click');
+    const video = wrapper.find('video');
+    expect(video.exists()).toBe(true);
+
+    // Simulate loadedmetadata event with 0x0 video dimensions
+    Object.defineProperty(video.element, 'videoWidth', { value: 0 });
+    Object.defineProperty(video.element, 'videoHeight', { value: 0 });
+    await video.trigger('loadedmetadata');
+
+    expect(wrapper.find('.custom-audio-player').exists()).toBe(true);
+    expect(wrapper.find('video').exists()).toBe(false);
+  });
+
   it('renders progress bar when file is transferring', () => {
     const wrapper = mount(MediaAttachment, {
       props: {
