@@ -7,6 +7,7 @@
       aria-hidden="true"
       @timeupdate="onTimeUpdate"
       @loadedmetadata="onLoadedMetadata"
+      @durationchange="onDurationChange"
       @ended="onEnded"
       @error="onError"
     ></audio>
@@ -42,7 +43,7 @@
           <input
             type="range"
             min="0"
-            :max="duration || 100"
+            :max="isFinite(duration) && duration > 0 ? duration : 100"
             step="0.1"
             :value="currentTime"
             @input="onSeek"
@@ -51,7 +52,7 @@
             :aria-label="`Seek audio position: ${formatTime(currentTime)}`"
             :aria-valuenow="Math.round(currentTime)"
             aria-valuemin="0"
-            :aria-valuemax="Math.round(duration || 100)"
+            :aria-valuemax="Math.round(isFinite(duration) && duration > 0 ? duration : 100)"
             :aria-valuetext="`${formatTime(currentTime)} of ${formatTime(duration)}`"
           />
         </div>
@@ -108,9 +109,11 @@ const props = withDefaults(
   defineProps<{
     src: string;
     fileName?: string;
+    initialDuration?: number;
   }>(),
   {
-    fileName: 'Audio Attachment'
+    fileName: 'Audio Attachment',
+    initialDuration: 0,
   }
 );
 
@@ -122,7 +125,7 @@ const audioRef = ref<HTMLAudioElement | null>(null);
 const isPlaying = ref(false);
 const isMuted = ref(false);
 const currentTime = ref(0);
-const duration = ref(0);
+const duration = ref(props.initialDuration || 0);
 const volume = ref(1);
 const previousVolume = ref(1);
 const hasError = ref(false);
@@ -136,12 +139,12 @@ let sourceNode: MediaElementAudioSourceNode | null = null;
 let animFrameId: number | null = null;
 
 const progressPercent = computed(() => {
-  if (!duration.value) return 0;
+  if (!duration.value || !isFinite(duration.value)) return 0;
   return Math.min(100, Math.max(0, (currentTime.value / duration.value) * 100));
 });
 
 const formatTime = (seconds: number): string => {
-  if (isNaN(seconds) || seconds <= 0) return '0:00';
+  if (!isFinite(seconds) || isNaN(seconds) || seconds <= 0) return '0:00';
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -258,9 +261,28 @@ const onTimeUpdate = () => {
   }
 };
 
-const onLoadedMetadata = () => {
-  if (audioRef.value) {
+const onDurationChange = () => {
+  if (audioRef.value && isFinite(audioRef.value.duration) && !isNaN(audioRef.value.duration) && audioRef.value.duration > 0) {
     duration.value = audioRef.value.duration;
+  }
+};
+
+const onLoadedMetadata = () => {
+  if (!audioRef.value) return;
+  const dur = audioRef.value.duration;
+  if (isFinite(dur) && !isNaN(dur) && dur > 0) {
+    duration.value = dur;
+  } else if (!props.initialDuration) {
+    audioRef.value.currentTime = 1e101;
+    const fixDuration = () => {
+      if (!audioRef.value) return;
+      audioRef.value.removeEventListener('timeupdate', fixDuration);
+      if (isFinite(audioRef.value.duration) && !isNaN(audioRef.value.duration)) {
+        duration.value = audioRef.value.duration;
+      }
+      audioRef.value.currentTime = 0;
+    };
+    audioRef.value.addEventListener('timeupdate', fixDuration);
   }
 };
 
