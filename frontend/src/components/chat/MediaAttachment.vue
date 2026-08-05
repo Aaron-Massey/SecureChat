@@ -43,7 +43,7 @@
               ⚠️ Unable to render media preview. You can still download the file below.
             </div>
             <img v-else-if="isImage" :src="mediaUrl" :alt="fileName" class="embedded-image" @error="onMediaError" />
-            <video v-else-if="isVideo" :src="mediaUrl" controls preload="metadata" class="embedded-video" :aria-label="`Video attachment ${fileName}`" @error="onMediaError"></video>
+            <video v-else-if="isVideo" :src="mediaUrl" controls preload="metadata" class="embedded-video" :aria-label="`Video attachment ${fileName}`" @loadedmetadata="onVideoMetadata" @error="onMediaError"></video>
             <AudioPlayer v-else-if="isAudio" :src="mediaUrl" :file-name="fileName" @error="onMediaError" />
           </div>
         </div>
@@ -88,15 +88,36 @@ const props = withDefaults(
 
 const isRevealed = ref(false);
 const hasLoadError = ref(false);
+const isAudioOnlyVideo = ref(false);
+
+const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.oga', '.weba', '.opus', '.m4a', '.aac', '.flac', '.mid', '.midi', '.wma'];
 
 const isImage = computed(() => props.mimeType.startsWith('image/'));
-const isVideo = computed(() => props.mimeType.startsWith('video/'));
-const isAudio = computed(() => props.mimeType.startsWith('audio/'));
+
+const isAudio = computed(() => {
+  if (isAudioOnlyVideo.value) return true;
+  if (props.mimeType.startsWith('audio/')) return true;
+  const lowerName = props.fileName.toLowerCase();
+  return AUDIO_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+});
+
+const isVideo = computed(() => {
+  if (isAudioOnlyVideo.value) return false;
+  return props.mimeType.startsWith('video/') && !isAudio.value;
+});
+
 const isMedia = computed(() => isImage.value || isVideo.value || isAudio.value);
 const formattedSize = computed(() => formatFileSize(props.fileSize));
 
 const toggleReveal = () => {
   isRevealed.value = !isRevealed.value;
+};
+
+const onVideoMetadata = (event: Event) => {
+  const videoEl = event.target as HTMLVideoElement;
+  if (videoEl && videoEl.videoWidth === 0 && videoEl.videoHeight === 0) {
+    isAudioOnlyVideo.value = true;
+  }
 };
 
 const onMediaError = () => {
