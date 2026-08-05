@@ -43,6 +43,25 @@ describe('MediaAttachment', () => {
     expect(wrapper.find('img').exists()).toBe(false);
   });
 
+  it('renders inline audio player for audio media attachments', async () => {
+    const wrapper = mount(MediaAttachment, {
+      props: {
+        fileName: 'voice_note.mp3',
+        fileSize: 250 * 1024,
+        mimeType: 'audio/mp3',
+        mediaUrl: 'blob:http://localhost/dummy-audio'
+      }
+    });
+
+    expect(wrapper.text()).toContain('Preview Audio');
+    expect(wrapper.find('audio').exists()).toBe(false);
+
+    // Reveal audio player
+    await wrapper.find('.reveal-button').trigger('click');
+    expect(wrapper.find('audio').exists()).toBe(true);
+    expect(wrapper.find('audio').attributes('src')).toBe('blob:http://localhost/dummy-audio');
+  });
+
   it('renders progress bar when file is transferring', () => {
     const wrapper = mount(MediaAttachment, {
       props: {
