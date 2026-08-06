@@ -12,6 +12,7 @@
     "backend": "npm run dev --prefix backend",
     "frontend": "npm run dev --prefix frontend",
     "test": "concurrently \"npm run test --prefix backend\" \"npm run test --prefix frontend\"",
+    "test:coverage": "concurrently \"npm run test:coverage --prefix backend\" \"npm run test:coverage --prefix frontend\"",
     "docker:sync": "node docker-sync-env.mjs",
     "docker:up": "npm run docker:sync && docker compose up --build",
     "docker:export": "npm run docker:sync && node docker-export.mjs",
