@@ -1,7 +1,11 @@
 # SecureChat
-[![Deploy to Raspberry Pi](https://github.com/Aaron-Massey/SecureChat/actions/workflows/deploy.yml/badge.svg)](https://github.com/Aaron-Massey/SecureChat/actions/workflows/deploy.yml)
 [![Vitest Tests & Coverage](https://github.com/Aaron-Massey/SecureChat/actions/workflows/test.yml/badge.svg)](https://github.com/Aaron-Massey/SecureChat/actions/workflows/test.yml)
 [![Vitest Coverage](https://img.shields.io/badge/Vitest-V8%20Coverage-646cff?logo=vitest&logoColor=white)](https://github.com/Aaron-Massey/SecureChat/actions/workflows/test.yml)
+[![Node Version](https://img.shields.io/badge/Node.js-%3E%3D22.18.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Dependabot](https://img.shields.io/badge/Dependabot-Active-0277BD?logo=dependabot&logoColor=white)](https://github.com/Aaron-Massey/SecureChat/security/dependabot)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/gh/Aaron-Massey/SecureChat)](https://app.codacy.com/gh/Aaron-Massey/SecureChat/dashboard)
+
 
 SecureChat is a modern, end-to-end encrypted (E2EE) peer-to-peer (WebRTC) chat application built with Vue 3, Pinia, TypeScript, and an Express + Socket.IO signaling backend. It features cryptographic key ratcheting, file chunking, full Docker containerization, and automated deployment scripts for remote servers.
 
