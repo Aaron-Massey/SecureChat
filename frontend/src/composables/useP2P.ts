@@ -122,14 +122,8 @@ export function useP2P() {
     }
 
     if (!isHeaderDecrypted) {
-      // Fail-Fast: Reject transfer immediately and notify sender
+      // Fail-Fast: Reject transfer locally for this client
       p2pManager.rejectFileTransfer(meta.fileId);
-      const cancelPayload = PayloadFactory.createFileCancelPayload(
-        'System',
-        meta.fileId,
-        `Key verification failed for file "${meta.fileName}"`
-      );
-      p2pManager.broadcastMessage(cancelPayload);
     }
 
     chatHistory.value.push({
@@ -173,12 +167,6 @@ export function useP2P() {
 
       if (!chunk0Valid) {
         p2pManager.rejectFileTransfer(fileId);
-        const cancelPayload = PayloadFactory.createFileCancelPayload(
-          'System',
-          fileId,
-          `Key verification failed on chunk 0`
-        );
-        p2pManager.broadcastMessage(cancelPayload);
 
         if (msg && msg.fileAttachment) {
           msg.decrypted = false;

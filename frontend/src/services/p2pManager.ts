@@ -332,8 +332,23 @@ export class P2PManager {
         }
         this.cancelledPeersPerFile.get(fileId)!.add(peerId);
       }
-      this.incomingFileBuffers.delete(fileId);
-      this.callbacks.onFileTransferCancelled?.(fileId, payload.plaintext || 'File transfer cancelled');
+
+      const fileEntry = this.incomingFileBuffers.get(fileId);
+      if (fileEntry) {
+        // If actively receiving, only cancel if payload is from file's sender or sender ID is untracked
+        const isFromSender = !peerId || !fileEntry.header.senderSessionId || peerId === fileEntry.header.senderSessionId;
+        if (isFromSender) {
+          this.incomingFileBuffers.delete(fileId);
+          this.callbacks.onFileTransferCancelled?.(fileId, payload.plaintext || 'File transfer cancelled');
+        }
+      } else {
+        // Sender side: Only trigger global cancellation if all active peers have cancelled
+        const cancelledPeers = this.cancelledPeersPerFile.get(fileId);
+        const allPeersCancelled = !peerId || !cancelledPeers || this.dataChannels.size === 0 || cancelledPeers.size >= this.dataChannels.size;
+        if (allPeersCancelled) {
+          this.callbacks.onFileTransferCancelled?.(fileId, payload.plaintext || 'File transfer cancelled');
+        }
+      }
     }
     this.callbacks.onMessageReceived(payload);
   }
@@ -397,21 +412,31 @@ export class P2PManager {
           return;
         }
 
-        channel.bufferedAmountLowThreshold = 65536; // 64 KB High-Water Mark
+        const highWaterMark = 65536; // 64 KB
+        channel.bufferedAmountLowThreshold = highWaterMark;
 
-        const trySend = () => {
-          if (channel.bufferedAmount > channel.bufferedAmountLowThreshold) {
-            channel.onbufferedamountlow = () => {
-              channel.onbufferedamountlow = null;
-              trySend();
+        const sendOrWait = () => {
+          if (channel.bufferedAmount > highWaterMark) {
+            const onLow = () => {
+              if (typeof channel.removeEventListener === 'function') {
+                channel.removeEventListener('bufferedamountlow', onLow);
+              } else {
+                channel.onbufferedamountlow = null;
+              }
+              sendOrWait();
             };
+            if (typeof channel.addEventListener === 'function') {
+              channel.addEventListener('bufferedamountlow', onLow);
+            } else {
+              channel.onbufferedamountlow = onLow;
+            }
           } else {
             channel.send(messageString);
             resolve();
           }
         };
 
-        trySend();
+        sendOrWait();
       });
     });
 
