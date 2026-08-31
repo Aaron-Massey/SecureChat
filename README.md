@@ -23,7 +23,7 @@ SecureChat is a modern, end-to-end encrypted (E2EE) peer-to-peer (WebRTC) chat a
 
 ## Demo
 
-SecureChat is being hosted on my [website](chat.AaronMassey.dev)! 
+SecureChat is being hosted on my [website](https://chat.AaronMassey.dev)! 
 
 ---
 
